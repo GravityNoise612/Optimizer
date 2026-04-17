@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaming Settings Optimizer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a1a; color: #e0e0e0; line-height: 1.6; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; }
+        h1 { font-size: 28px; font-weight: 600; margin-bottom: 2rem; color: #f0f0f0; }
+        h2 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; margin-top: 0; color: #f0f0f0; }
+        .section { margin-bottom: 2rem; }
+        .specs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+        .spec-card { background: #2a2a2a; padding: 1rem; border-radius: 8px; border: 0.5px solid #444; }
+        .spec-label { font-size: 11px; color: #999; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .spec-value { font-size: 15px; font-weight: 500; color: #f0f0f0; }
+        .input-label { display: block; font-size: 14px; margin-bottom: 8px; color: #ccc; }
+        .directory-input-group { display: flex; gap: 8px; }
+        input[type="text"], input[type="number"] { flex: 1; padding: 8px 12px; border-radius: 8px; border: 0.5px solid #444; background: #2a2a2a; color: #e0e0e0; font-size: 14px; }
+        input[type="text"]:focus, input[type="number"]:focus { outline: none; border-color: #666; background: #333; }
+        button { padding: 8px 16px; border-radius: 8px; border: 0.5px solid #444; background: transparent; color: #e0e0e0; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        button:hover:not(:disabled) { background: #333; border-color: #555; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .table-wrapper { overflow-x: auto; margin-top: 1rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { text-align: left; padding: 12px 0; font-weight: 500; color: #999; border-bottom: 0.5px solid #444; }
+        td { padding: 12px 0; border-bottom: 0.5px solid #444; }
+        tr:last-child td { border-bottom: none; }
+        .game-name { font-weight: 500; color: #f0f0f0; }
+        .game-size, .game-date { color: #999; }
+        .select-btn { padding: 6px 12px; border-radius: 8px; border: 0.5px solid #444; background: transparent; color: #e0e0e0; cursor: pointer; font-size: 13px; font-weight: 500; }
+        .select-btn:hover { background: #333; border-color: #555; }
+        .select-btn.selected { background: #1e5a96; border-color: #2a7ac2; color: #fff; }
+        .settings-panel { background: #2a2a2a; border: 0.5px solid #444; border-radius: 8px; padding: 1.5rem; }
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+        .setting-item { background: #1a1a1a; padding: 12px; border-radius: 8px; border: 0.5px solid #444; }
+        .setting-label { font-size: 12px; color: #999; margin-bottom: 6px; text-transform: capitalize; }
+        .setting-value { font-size: 15px; font-weight: 500; color: #f0f0f0; word-break: break-word; }
+        .info-box { margin-top: 1.5rem; padding: 1rem; background: #1a3a5c; border-radius: 8px; border: 0.5px solid #2a5a8c; color: #a8d5ff; font-size: 13px; }
+        .empty-state { text-align: center; padding: 2rem; color: #999; }
+        .loading { color: #999; font-size: 14px; }
+        .notification { position: fixed; top: 20px; right: 20px; background: #2d7d3d; color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; z-index: 1000; border: 0.5px solid #3a9a4a; }
+        #specsFormContainer { display: none; background: #2a2a2a; border: 0.5px solid #444; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
+        #settingsPanel { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gaming Settings Optimizer</h1>
+
+        <!-- System Specs Section -->
+        <div class="section">
+            <h2>System hardware</h2>
+            <div style="margin-bottom: 1rem;">
+                <button onclick="toggleSpecsEdit()">Edit specifications</button>
+            </div>
+            
+            <!-- Edit Specs Form -->
+            <div id="specsFormContainer">
+                <h3 style="font-size: 16px; font-weight: 500; margin-bottom: 1rem; margin-top: 0; color: #f0f0f0;">Manual system specifications</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 1rem;">
+                    <div><label class="input-label">GPU Model</label><input type="text" id="gpuInput" placeholder="e.g., RTX 4070"></div>
+                    <div><label class="input-label">CPU Model</label><input type="text" id="cpuModelInput" placeholder="e.g., Intel Core i7-13700K"></div>
+                    <div><label class="input-label">CPU Cores</label><input type="number" id="cpuInput" placeholder="e.g., 16"></div>
+                    <div><label class="input-label">System RAM (GB)</label><input type="number" id="ramInput" placeholder="e.g., 32"></div>
+                    <div><label class="input-label">Monitor Resolution</label><input type="text" id="resolutionInput" placeholder="e.g., 1920x1080"></div>
+                    <div><label class="input-label">Refresh Rate (Hz)</label><input type="number" id="refreshRateInput" placeholder="e.g., 144"></div>
+                    <div><label class="input-label">Performance Tier</label>
+                        <select id="tierInput" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 0.5px solid #444; background: #2a2a2a; color: #e0e0e0; font-size: 14px;">
+                            <option value="">Auto-detect</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="ultra">Ultra</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="saveSpecs()" style="border: 0.5px solid #2a7ac2; background: #1e5a96; color: #fff;">Save specifications</button>
+                    <button onclick="toggleSpecsEdit()">Cancel</button>
+                </div>
+            </div>
+
+            <div id="specsContainer" class="specs-grid">
+                <div class="loading">Detecting system specs...</div>
+            </div>
+        </div>
+
+        <!-- Game Scanner Section -->
+        <div class="section">
+            <h2>Scan for games</h2>
+            <div style="margin-bottom: 1rem; padding: 1rem; background: #2a2a2a; border: 0.5px solid #444; border-radius: 8px;">
+                <p style="font-size: 13px; color: #ccc; margin: 0 0 8px 0;"><strong>ℹ️ How it works:</strong></p>
+                <p style="font-size: 12px; color: #999; margin: 0;">1. Click "Browse" and select your games folder<br>2. Click "Scan" to find installed games<br><br><strong>Result:</strong> Found games will display with their relative install paths within your selected folder.</p>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label class="input-label">Game install location</label>
+                <div class="directory-input-group">
+                    <input type="text" id="gameDirectory" placeholder="Click Browse..." readonly style="background: #333;">
+                    <button onclick="openFolderPicker()">Browse</button>
+                    <button onclick="scanGames()" id="scanBtn">Scan</button>
+                </div>
+                <p style="font-size: 12px; color: #999; margin: 8px 0 0 0;">Select your games folder (Steam, Epic, etc.)</p>
+            </div>
+            <div id="gamesTableContainer"></div>
+        </div>
+
+        <!-- Recommended Settings Section -->
+        <div id="settingsPanel" class="section">
+            <div class="settings-panel">
+                <div style="margin-bottom: 1.5rem;">
+                    <h2 style="margin: 0 0 0.5rem 0;" id="gameTitle"></h2>
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ccc;">
+                        <span>Recommended profile:</span>
+                        <span id="profileBadge" style="display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; text-transform: uppercase;"></span>
+                    </div>
+                </div>
+                <div id="settingsGrid" class="settings-grid"></div>
+                <div class="info-box">
+                    💡 These settings are optimized for your system specs to balance visual quality and performance.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gameDatabase = {
+            'cyberpunk 2077': { name: 'Cyberpunk 2077', settings: { low: { resolution: '1080p', qualityPreset: 'Low', textureQuality: 'Low', rayTracing: 'Off', dlss: 'Performance', shadowQuality: 'Low', reflectionQuality: 'Low', volumetricQuality: 'Low', foliageQuality: 'Low', crowDensity: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', qualityPreset: 'Medium', textureQuality: 'Medium', rayTracing: 'Low', dlss: 'Balanced', shadowQuality: 'Medium', reflectionQuality: 'Medium', volumetricQuality: 'Medium', foliageQuality: 'Medium', crowDensity: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', qualityPreset: 'High', textureQuality: 'High', rayTracing: 'High', dlss: 'Quality', shadowQuality: 'High', reflectionQuality: 'High', volumetricQuality: 'High', foliageQuality: 'High', crowDensity: 'High', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', textureQuality: 'Ultra', rayTracing: 'Ultra', dlss: 'Off', shadowQuality: 'Ultra', reflectionQuality: 'Ultra', volumetricQuality: 'Ultra', foliageQuality: 'Ultra', crowDensity: 'Ultra', fpsTarget: 144 } } },
+            'elden ring': { name: 'Elden Ring', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'TAA', textureQuality: 'Low', ambientOcclusion: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'TAA', textureQuality: 'Medium', ambientOcclusion: 'Low', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', textureQuality: 'High', ambientOcclusion: 'High', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'FXAA', textureQuality: 'Ultra', ambientOcclusion: 'High', fpsTarget: 120 } } },
+            'baldurs gate 3': { name: "Baldur's Gate 3", settings: { low: { resolution: '1080p', graphicsQuality: 'Low', textureQuality: 'Low', shadowQuality: 'Low', reflectionQuality: 'Off', volumetricEffects: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', textureQuality: 'Medium', shadowQuality: 'Medium', reflectionQuality: 'Low', volumetricEffects: 'Low', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', textureQuality: 'High', shadowQuality: 'High', reflectionQuality: 'Medium', volumetricEffects: 'Medium', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', textureQuality: 'Ultra', shadowQuality: 'Ultra', reflectionQuality: 'High', volumetricEffects: 'High', fpsTarget: 120 } } },
+            'fortnite': { name: 'Fortnite', settings: { low: { resolution: '1080p', viewDistance: 'Near', shadows: 'Off', effects: 'Low', textureQuality: 'Low', antiAliasing: 'Off', fpsTarget: 144 }, medium: { resolution: '1440p', viewDistance: 'Medium', shadows: 'Low', effects: 'Medium', textureQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 144 }, high: { resolution: '1440p', viewDistance: 'Far', shadows: 'High', effects: 'High', textureQuality: 'High', antiAliasing: 'TAA', fpsTarget: 144 }, ultra: { resolution: '4K', viewDistance: 'Epic', shadows: 'High', effects: 'Epic', textureQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'starfield': { name: 'Starfield', settings: { low: { resolution: '1080p', imageQuality: 'Low', shadowQuality: 'Low', reflections: 'Off', ambientOcclusion: 'Off', contactShadows: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', imageQuality: 'Medium', shadowQuality: 'Medium', reflections: 'Low', ambientOcclusion: 'Low', contactShadows: 'Off', fpsTarget: 60 }, high: { resolution: '1440p', imageQuality: 'High', shadowQuality: 'High', reflections: 'Medium', ambientOcclusion: 'Medium', contactShadows: 'On', fpsTarget: 60 }, ultra: { resolution: '4K', imageQuality: 'Ultra', shadowQuality: 'Ultra', reflections: 'High', ambientOcclusion: 'High', contactShadows: 'On', fpsTarget: 120 } } },
+            'helldivers 2': { name: 'HELLDIVERS 2', settings: { low: { resolution: '1080p', textureQuality: 'Low', shadowQuality: 'Low', effectQuality: 'Low', viewDistance: 'Near', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', textureQuality: 'Medium', shadowQuality: 'Medium', effectQuality: 'Medium', viewDistance: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', textureQuality: 'High', shadowQuality: 'High', effectQuality: 'High', viewDistance: 'Far', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', textureQuality: 'Ultra', shadowQuality: 'Ultra', effectQuality: 'Ultra', viewDistance: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'palworld': { name: 'Palworld', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', viewDistance: 'Low', effects: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', viewDistance: 'Medium', effects: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', viewDistance: 'High', effects: 'High', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', viewDistance: 'Ultra', effects: 'Ultra', fpsTarget: 120 } } },
+            'black myth wukong': { name: 'Black Myth: Wukong', settings: { low: { resolution: '1080p', textureQuality: 'Low', shadowQuality: 'Low', rayTracing: 'Off', volumetricEffects: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', textureQuality: 'Medium', shadowQuality: 'Medium', rayTracing: 'Low', volumetricEffects: 'Low', fpsTarget: 60 }, high: { resolution: '1440p', textureQuality: 'High', shadowQuality: 'High', rayTracing: 'High', volumetricEffects: 'Medium', fpsTarget: 60 }, ultra: { resolution: '4K', textureQuality: 'Ultra', shadowQuality: 'Ultra', rayTracing: 'Ultra', volumetricEffects: 'Ultra', fpsTarget: 120 } } },
+            'dragon age the veilguard': { name: 'Dragon Age: The Veilguard', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'dragons dogma 2': { name: "Dragon's Dogma 2", settings: { low: { resolution: '1080p', graphicsPreset: 'Low', shadowQuality: 'Low', reflections: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsPreset: 'Medium', shadowQuality: 'Medium', reflections: 'Low', fpsTarget: 60 }, high: { resolution: '1440p', graphicsPreset: 'High', shadowQuality: 'High', reflections: 'Medium', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsPreset: 'Ultra', shadowQuality: 'Ultra', reflections: 'High', fpsTarget: 120 } } },
+            'final fantasy xvi': { name: 'Final Fantasy XVI', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', targetFPS: '30fps', antiAliasing: 'Off', fpsTarget: 30 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', antiAliasing: 'FXAA', fpsTarget: 30 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', targetFPS: '60fps', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'tekken 8': { name: 'Tekken 8', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', reflections: 'Off', antiAliasing: 'Off', fpsTarget: 120 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', reflections: 'Low', antiAliasing: 'FXAA', fpsTarget: 120 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', reflections: 'Medium', antiAliasing: 'TAA', fpsTarget: 144 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', reflections: 'High', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'street fighter 6': { name: 'Street Fighter 6', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', effectQuality: 'Low', antiAliasing: 'Off', fpsTarget: 120 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', effectQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 120 }, high: { resolution: '1440p', graphicsQuality: 'High', effectQuality: 'High', antiAliasing: 'TAA', fpsTarget: 144 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', effectQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'alan wake 2': { name: 'Alan Wake 2', settings: { low: { resolution: '1080p', textureQuality: 'Low', shadowQuality: 'Low', rayTracing: 'Off', reflections: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', textureQuality: 'Medium', shadowQuality: 'Medium', rayTracing: 'Low', reflections: 'Low', fpsTarget: 60 }, high: { resolution: '1440p', textureQuality: 'High', shadowQuality: 'High', rayTracing: 'High', reflections: 'Medium', fpsTarget: 60 }, ultra: { resolution: '4K', textureQuality: 'Ultra', shadowQuality: 'Ultra', rayTracing: 'Ultra', reflections: 'High', fpsTarget: 120 } } },
+            'hellblade 2': { name: 'Senua\'s Saga: Hellblade II', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', audioQuality: 'Stereo', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', audioQuality: 'Spatial', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', audioQuality: 'Spatial', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', audioQuality: 'SpatialHD', fpsTarget: 120 } } },
+            'indiana jones great circle': { name: 'Indiana Jones and the Great Circle', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'metaphor refantazio': { name: 'Metaphor: ReFantazio', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            's.t.a.l.k.e.r. 2': { name: 'S.T.A.L.K.E.R. 2', settings: { low: { resolution: '1080p', textureQuality: 'Low', shadowQuality: 'Low', rayTracing: 'Off', ambientOcclusion: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', textureQuality: 'Medium', shadowQuality: 'Medium', rayTracing: 'Low', ambientOcclusion: 'Low', fpsTarget: 60 }, high: { resolution: '1440p', textureQuality: 'High', shadowQuality: 'High', rayTracing: 'High', ambientOcclusion: 'Medium', fpsTarget: 60 }, ultra: { resolution: '4K', textureQuality: 'Ultra', shadowQuality: 'Ultra', rayTracing: 'Ultra', ambientOcclusion: 'High', fpsTarget: 120 } } },
+            'space marine 2': { name: 'Warhammer 40K: Space Marine 2', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', effectQuality: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', effectQuality: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', effectQuality: 'High', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', effectQuality: 'Ultra', fpsTarget: 120 } } },
+            'minecraft': { name: 'Minecraft', settings: { low: { resolution: '1080p', renderDistance: '8', graphicsQuality: 'Fast', cloudHeight: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', renderDistance: '12', graphicsQuality: 'Fancy', cloudHeight: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', renderDistance: '16', graphicsQuality: 'Fancy', cloudHeight: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', renderDistance: '32', graphicsQuality: 'Fabulous', cloudHeight: 'Ultra', fpsTarget: 240 } } },
+            'valorant': { name: 'VALORANT', settings: { low: { resolution: '1080p', quality: 'Low', shadows: 'Off', antiAliasing: 'Off', fpsTarget: 240 }, medium: { resolution: '1440p', quality: 'Medium', shadows: 'Low', antiAliasing: 'FXAA', fpsTarget: 240 }, high: { resolution: '1440p', quality: 'High', shadows: 'High', antiAliasing: 'TAA', fpsTarget: 360 }, ultra: { resolution: '4K', quality: 'Ultra', shadows: 'High', antiAliasing: 'TAA', fpsTarget: 480 } } },
+            'counter-strike 2': { name: 'Counter-Strike 2', settings: { low: { resolution: '1080p', quality: 'Low', lightingQuality: 'Low', antiAliasing: 'Off', fpsTarget: 240 }, medium: { resolution: '1440p', quality: 'Medium', lightingQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 240 }, high: { resolution: '1440p', quality: 'High', lightingQuality: 'High', antiAliasing: 'TAA', fpsTarget: 360 }, ultra: { resolution: '4K', quality: 'Ultra', lightingQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 480 } } },
+            'dota 2': { name: 'Dota 2', settings: { low: { resolution: '1080p', quality: 'Low', shadows: 'Off', effects: 'Low', fpsTarget: 120 }, medium: { resolution: '1440p', quality: 'Medium', shadows: 'On', effects: 'Medium', fpsTarget: 120 }, high: { resolution: '1440p', quality: 'High', shadows: 'High', effects: 'High', fpsTarget: 144 }, ultra: { resolution: '4K', quality: 'Ultra', shadows: 'Ultra', effects: 'Ultra', fpsTarget: 240 } } },
+            'league of legends': { name: 'League of Legends', settings: { low: { resolution: '1080p', quality: 'Very Low', shadows: 'Off', particles: 'Low', fpsTarget: 120 }, medium: { resolution: '1440p', quality: 'Medium', shadows: 'On', particles: 'Medium', fpsTarget: 120 }, high: { resolution: '1440p', quality: 'High', shadows: 'High', particles: 'High', fpsTarget: 144 }, ultra: { resolution: '4K', quality: 'Ultra', shadows: 'Ultra', particles: 'Ultra', fpsTarget: 240 } } },
+            'rust': { name: 'Rust', settings: { low: { resolution: '1080p', graphicsQuality: 'Fastest', shadowQuality: 'Off', viewDistance: 'Near', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Fast', shadowQuality: 'Simple', viewDistance: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'Good', shadowQuality: 'Fine', viewDistance: 'Far', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Beautiful', shadowQuality: 'Cinematic', viewDistance: 'Ultra', fpsTarget: 120 } } },
+            'escape from tarkov': { name: 'Escape from Tarkov', settings: { low: { resolution: '1080p', textureQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', textureQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', textureQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', textureQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'ark survival ascended': { name: 'ARK: Survival Ascended', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', drawDistance: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', drawDistance: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', drawDistance: 'High', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', drawDistance: 'Ultra', fpsTarget: 120 } } },
+            'final fantasy vii rebirth': { name: 'Final Fantasy VII Rebirth', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'avatar frontiers of pandora': { name: 'Avatar: Frontiers of Pandora', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', rayTracing: 'Off', reflections: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', rayTracing: 'Low', reflections: 'Low', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', rayTracing: 'High', reflections: 'Medium', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', rayTracing: 'Ultra', reflections: 'High', fpsTarget: 120 } } },
+            'halo infinite': { name: 'Halo Infinite', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 120 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 120 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 144 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'forza horizon 5': { name: 'Forza Horizon 5', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', raytrace: 'Off', carDetail: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', raytrace: 'Low', carDetail: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', raytrace: 'Medium', carDetail: 'High', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', raytrace: 'Ultra', carDetail: 'Ultra', fpsTarget: 120 } } },
+            'forza motorsport': { name: 'Forza Motorsport', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', trackDetail: 'Low', fpsTarget: 120 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', trackDetail: 'Medium', fpsTarget: 120 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', trackDetail: 'High', fpsTarget: 144 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', trackDetail: 'Ultra', fpsTarget: 240 } } },
+            'demon\'s souls': { name: "Demon's Souls", settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'bloodborne': { name: 'Bloodborne', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', effectQuality: 'Low', fpsTarget: 30 }, medium: { resolution: '1080p', qualityPreset: 'Medium', shadowQuality: 'Medium', effectQuality: 'Medium', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', effectQuality: 'High', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', effectQuality: 'Ultra', fpsTarget: 120 } } },
+            'sekiro shadows die twice': { name: 'Sekiro: Shadows Die Twice', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'monster hunter world': { name: 'Monster Hunter: World', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'monster hunter rise': { name: 'Monster Hunter Rise', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', effectQuality: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', effectQuality: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', effectQuality: 'High', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', effectQuality: 'Ultra', fpsTarget: 120 } } },
+            'dark souls iii': { name: 'Dark Souls III', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'apex legends': { name: 'Apex Legends', settings: { low: { resolution: '1080p', quality: 'Low', shadowQuality: 'Off', antiAliasing: 'Off', fpsTarget: 144 }, medium: { resolution: '1440p', quality: 'Medium', shadowQuality: 'Low', antiAliasing: 'FXAA', fpsTarget: 144 }, high: { resolution: '1440p', quality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 144 }, ultra: { resolution: '4K', quality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'overwatch 2': { name: 'Overwatch 2', settings: { low: { resolution: '1080p', quality: 'Low', shadowQuality: 'Off', antiAliasing: 'Off', fpsTarget: 144 }, medium: { resolution: '1440p', quality: 'Medium', shadowQuality: 'Low', antiAliasing: 'FXAA', fpsTarget: 144 }, high: { resolution: '1440p', quality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 144 }, ultra: { resolution: '4K', quality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'destiny 2': { name: 'Destiny 2', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 120 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 144 } } },
+            'final fantasy vii remake': { name: 'Final Fantasy VII Remake', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'the last of us part i': { name: 'The Last of Us Part I', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'uncharted legacy of thieves': { name: 'Uncharted: Legacy of Thieves', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'dishonored 2': { name: 'Dishonored 2', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'hitman 3': { name: 'HITMAN 3', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'the outer worlds': { name: 'The Outer Worlds', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'stardew valley': { name: 'Stardew Valley', settings: { low: { resolution: '1080p', quality: 'Low', antiAliasing: 'Off', resolution: '1080p', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', antiAliasing: 'Off', resolution: '1440p', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', antiAliasing: 'FXAA', resolution: '1440p', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', antiAliasing: 'TAA', resolution: '4K', fpsTarget: 240 } } },
+            'hollow knight': { name: 'Hollow Knight', settings: { low: { resolution: '1080p', quality: 'Low', particles: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', particles: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', particles: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', particles: 'Ultra', fpsTarget: 240 } } },
+            'celeste': { name: 'Celeste', settings: { low: { resolution: '1080p', quality: 'Low', motionBlur: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', motionBlur: 'Low', fpsTarget: 120 }, high: { resolution: '1440p', quality: 'High', motionBlur: 'High', fpsTarget: 144 }, ultra: { resolution: '4K', quality: 'Ultra', motionBlur: 'High', fpsTarget: 240 } } },
+            'hades': { name: 'Hades', settings: { low: { resolution: '1080p', quality: 'Low', particles: 'Low', effects: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', particles: 'Medium', effects: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', particles: 'High', effects: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', particles: 'Ultra', effects: 'Ultra', fpsTarget: 240 } } },
+            'terraria': { name: 'Terraria', settings: { low: { resolution: '1080p', quality: 'Low', lighting: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', lighting: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', lighting: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', lighting: 'Ultra', fpsTarget: 240 } } },
+            'stardew valley': { name: 'Stardew Valley', settings: { low: { resolution: '1080p', quality: 'Low', particles: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', particles: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', particles: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', particles: 'Ultra', fpsTarget: 240 } } },
+            'slay the spire': { name: 'Slay the Spire', settings: { low: { resolution: '1080p', quality: 'Low', effects: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', effects: 'Low', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', effects: 'Medium', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', effects: 'High', fpsTarget: 240 } } },
+            'risk of rain 2': { name: 'Risk of Rain 2', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', antiAliasing: 'TAA', fpsTarget: 120 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'enter the gungeon': { name: 'Enter the Gungeon', settings: { low: { resolution: '1080p', quality: 'Low', particles: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', particles: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', particles: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', particles: 'Ultra', fpsTarget: 240 } } },
+            'vampire survivors': { name: 'Vampire Survivors', settings: { low: { resolution: '1080p', quality: 'Low', particles: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', particles: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', particles: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', particles: 'Ultra', fpsTarget: 240 } } },
+            'inside': { name: 'INSIDE', settings: { low: { resolution: '1080p', quality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', antiAliasing: 'TAA', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'journey': { name: 'Journey', settings: { low: { resolution: '1080p', quality: 'Low', sandDetail: 'Low', fpsTarget: 30 }, medium: { resolution: '1440p', quality: 'Medium', sandDetail: 'Medium', fpsTarget: 30 }, high: { resolution: '1440p', quality: 'High', sandDetail: 'High', fpsTarget: 60 }, ultra: { resolution: '4K', quality: 'Ultra', sandDetail: 'Ultra', fpsTarget: 120 } } },
+            'hotline miami': { name: 'Hotline Miami', settings: { low: { resolution: '1080p', quality: 'Low', effects: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', quality: 'Medium', effects: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', quality: 'High', effects: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', quality: 'Ultra', effects: 'Ultra', fpsTarget: 240 } } },
+            'fire emblem three houses': { name: 'Fire Emblem: Three Houses', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', antiAliasing: 'Off', fpsTarget: 30 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', antiAliasing: 'Off', fpsTarget: 30 }, high: { resolution: '1440p', graphicsQuality: 'High', antiAliasing: 'FXAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'xenoblade chronicles 3': { name: 'Xenoblade Chronicles 3', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', antiAliasing: 'Off', fpsTarget: 30 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', antiAliasing: 'Off', fpsTarget: 30 }, high: { resolution: '1440p', graphicsQuality: 'High', antiAliasing: 'FXAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'octopath traveler': { name: 'Octopath Traveler', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', antiAliasing: 'Off', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', antiAliasing: 'FXAA', fpsTarget: 120 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'divinity original sin 2': { name: 'Divinity: Original Sin 2', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 120 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 240 } } },
+            'dragon age inquisition': { name: 'Dragon Age: Inquisition', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'mass effect legendary edition': { name: 'Mass Effect Legendary Edition', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 120 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 144 } } },
+            'fallout 4': { name: 'Fallout 4', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'the witcher 3': { name: 'The Witcher 3: Wild Hunt', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', hairWorks: 'Off', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', hairWorks: 'Off', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', hairWorks: 'On', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', hairWorks: 'On', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'god of war ragnarok': { name: 'God of War Ragnarök', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'ghost of tsushima': { name: 'Ghost of Tsushima', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'horizon forbidden west': { name: 'Horizon Forbidden West', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'spider-man': { name: 'Spider-Man', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'spiderman miles morales': { name: 'Spider-Man: Miles Morales', settings: { low: { resolution: '1080p', qualityPreset: 'Low', shadowQuality: 'Low', targetFPS: '30fps', fpsTarget: 30 }, medium: { resolution: '1440p', qualityPreset: 'Medium', shadowQuality: 'Medium', targetFPS: '30fps', fpsTarget: 30 }, high: { resolution: '1440p', qualityPreset: 'High', shadowQuality: 'High', targetFPS: '60fps', fpsTarget: 60 }, ultra: { resolution: '4K', qualityPreset: 'Ultra', shadowQuality: 'Ultra', targetFPS: '120fps', fpsTarget: 120 } } },
+            'assassins creed valhalla': { name: 'Assassin\'s Creed Valhalla', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'kingdom come deliverance': { name: 'Kingdom Come: Deliverance', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'grounded': { name: 'Grounded', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', antiAliasing: 'Off', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', antiAliasing: 'FXAA', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', antiAliasing: 'TAA', fpsTarget: 60 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', antiAliasing: 'TAA', fpsTarget: 120 } } },
+            'valheim': { name: 'Valheim', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', viewDistance: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', viewDistance: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', viewDistance: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', viewDistance: 'Ultra', fpsTarget: 240 } } },
+            'subnautica': { name: 'Subnautica', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', viewDistance: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', viewDistance: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', viewDistance: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', viewDistance: 'Ultra', fpsTarget: 240 } } },
+            'factorio': { name: 'Factorio', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', renderDistance: 'Low', particles: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', renderDistance: 'Medium', particles: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', renderDistance: 'High', particles: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', renderDistance: 'Ultra', particles: 'Ultra', fpsTarget: 240 } } },
+            'rimworld': { name: 'RimWorld', settings: { low: { resolution: '1080p', graphicsQuality: 'Low', shadowQuality: 'Low', particles: 'Low', fpsTarget: 60 }, medium: { resolution: '1440p', graphicsQuality: 'Medium', shadowQuality: 'Medium', particles: 'Medium', fpsTarget: 60 }, high: { resolution: '1440p', graphicsQuality: 'High', shadowQuality: 'High', particles: 'High', fpsTarget: 120 }, ultra: { resolution: '4K', graphicsQuality: 'Ultra', shadowQuality: 'Ultra', particles: 'Ultra', fpsTarget: 240 } } }
+        };
+
+        let systemSpecs = null;
+        let gamesList = [];
+        let selectedGame = null;
+        let selectedFolderHandle = null;
+        let selectedFolderName = ''; // Track the folder name/path user selected
+        const supportsFileSystemAccess = typeof window.showDirectoryPicker !== 'undefined';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            detectSystemSpecs();
+            setTimeout(() => loadSavedSpecs(), 300);
+        });
+
+        function detectSystemSpecs() {
+            try {
+                let cpuCores = navigator.hardwareConcurrency || 'Unknown';
+                let ram = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Unknown';
+                let gpu = 'Unknown';
+
+                try {
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+                    if (gl) {
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        if (debugInfo) {
+                            const fullGpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                            gpu = extractGPUModel(fullGpu);
+                            console.log('Raw GPU string:', fullGpu);
+                            console.log('Extracted GPU:', gpu);
+                        }
+                    }
+                    canvas.remove();
+                } catch (e) {
+                    console.log('WebGL error:', e);
+                }
+
+                const screenWidth = window.screen.width * (window.devicePixelRatio || 1);
+                const screenHeight = window.screen.height * (window.devicePixelRatio || 1);
+                const refreshRate = screen.refreshRate || 'Unknown';
+                const resolution = `${Math.round(screenWidth)}x${Math.round(screenHeight)}` + (refreshRate !== 'Unknown' ? ` (${refreshRate}Hz)` : '');
+
+                let estimatedTier = 'medium';
+                if (gpu !== 'Unknown') {
+                    const gpuLower = gpu.toLowerCase();
+                    console.log('GPU lowercase for matching:', gpuLower);
+                    
+                    // ULTRA tier - Latest high-end flagship GPUs
+                    if (gpuLower.includes('5090') || gpuLower.includes('4090') ||
+                        gpuLower.includes('9090') || gpuLower.includes('9070 xt') ||
+                        gpuLower.includes('9080') || gpuLower.includes('9060 xt') ||
+                        gpuLower.includes('7900 xtx') || gpuLower.includes('7900 xt') ||
+                        gpuLower.includes('rtx 6000') || gpuLower.includes('rtx 5880') ||
+                        gpuLower.includes('a100') || gpuLower.includes('h100') ||
+                        gpuLower.includes('4080 super')) {
+                        estimatedTier = 'ultra';
+                        console.log('Matched ULTRA tier');
+                    }
+                    // HIGH tier - Mid-to-high end GPUs (current gen flagships + last gen high-end)
+                    else if (gpuLower.includes('5080') || gpuLower.includes('5070 ti') ||
+                             gpuLower.includes('5070') || gpuLower.includes('5060 ti') ||
+                             gpuLower.includes('9070') || gpuLower.includes('9060') ||
+                             gpuLower.includes('4070 ti super') || gpuLower.includes('4070 ti') || 
+                             gpuLower.includes('4070 super') || gpuLower.includes('4070') || 
+                             gpuLower.includes('4080') || gpuLower.includes('4060 ti') ||
+                             gpuLower.includes('3090 ti') || gpuLower.includes('3090') ||
+                             gpuLower.includes('3080 ti') || gpuLower.includes('3080') ||
+                             gpuLower.includes('7800 xt') || gpuLower.includes('7900 gre') ||
+                             gpuLower.includes('6800') || gpuLower.includes('6900') ||
+                             gpuLower.includes('7700') || gpuLower.includes('7750') ||
+                             gpuLower.includes('m4 max') || gpuLower.includes('m4 pro') ||
+                             gpuLower.includes('m3 max') || gpuLower.includes('m3 pro') ||
+                             gpuLower.includes('m2 max') || gpuLower.includes('m2 ultra')) {
+                        estimatedTier = 'high';
+                        console.log('Matched HIGH tier');
+                    }
+                    // MEDIUM tier - Mid-range GPUs
+                    else if (gpuLower.includes('5060') || gpuLower.includes('4060') || 
+                             gpuLower.includes('4050') || gpuLower.includes('3070') || 
+                             gpuLower.includes('3060 ti') || gpuLower.includes('3060') ||
+                             gpuLower.includes('7600') || gpuLower.includes('7600 xt') ||
+                             gpuLower.includes('6700') || gpuLower.includes('6700 xt') ||
+                             gpuLower.includes('6600') || gpuLower.includes('5700') ||
+                             gpuLower.includes('5600') || gpuLower.includes('m3') || 
+                             gpuLower.includes('m2') || gpuLower.includes('m1 pro')) {
+                        estimatedTier = 'medium';
+                        console.log('Matched MEDIUM tier');
+                    }
+                    // LOW tier - Budget and entry-level GPUs
+                    else if (gpuLower.includes('3050') || gpuLower.includes('2060') ||
+                             gpuLower.includes('1660') || gpuLower.includes('1650') || 
+                             gpuLower.includes('1050') || gpuLower.includes('5500') || 
+                             gpuLower.includes('5600 xt') || gpuLower.includes('6500') ||
+                             gpuLower.includes('arc a770') || gpuLower.includes('arc a750') ||
+                             gpuLower.includes('m1') || gpuLower.includes('m1 max')) {
+                        estimatedTier = 'low';
+                        console.log('Matched LOW tier');
+                    }
+                    // Default to high for unknown modern GPUs with RTX/Radeon/Arc/GeForce
+                    else if (gpuLower.includes('rtx') || gpuLower.includes('radeon rx') || 
+                             gpuLower.includes('arc') || gpuLower.includes('geforce')) {
+                        estimatedTier = 'high';
+                        console.log('Matched HIGH tier (generic modern GPU)');
+                    }
+                    else {
+                        console.log('No tier match found, defaulting to medium');
+                    }
+                }
+
+                let cpuDisplay = cpuCores !== 'Unknown' ? `${cpuCores}-core processor` : 'Unknown';
+
+                systemSpecs = {
+                    gpu: gpu !== 'Unknown' ? gpu : 'Integrated Graphics',
+                    gpuMemory: 'Unknown',
+                    cpu: cpuDisplay,
+                    cpuCores: cpuCores,
+                    cpuModel: 'Unknown',
+                    ram: ram,
+                    resolution: resolution,
+                    estimatedTier: estimatedTier
+                };
+
+                displaySystemSpecs();
+            } catch (e) {
+                console.error('detectSystemSpecs error:', e);
+                systemSpecs = {
+                    gpu: 'Unable to detect',
+                    gpuMemory: 'Unknown',
+                    cpu: navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency}-core` : 'Unknown',
+                    cpuCores: navigator.hardwareConcurrency || 'Unknown',
+                    cpuModel: 'Unknown',
+                    ram: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Unknown',
+                    resolution: `${window.screen.width}x${window.screen.height}`,
+                    estimatedTier: 'medium'
+                };
+                displaySystemSpecs();
+            }
+        }
+
+        function extractGPUModel(fullGpuString) {
+            if (!fullGpuString) return 'Unknown';
+            let gpu = String(fullGpuString).trim();
+            
+            // Remove ANGLE wrapper
+            gpu = gpu.replace(/ANGLE \(/i, '').replace(/\)$/, '').trim();
+            
+            // Extract just the GPU name before DirectX info
+            // Pattern: "Vendor, Vendor GPU Model (ID) DirectX..."
+            const match = gpu.match(/(?:AMD|NVIDIA|Intel),?\s+(?:AMD|NVIDIA|Intel)?\s+((?:Radeon|GeForce|Arc|RTX|GTX)\s+[^\(]*?)\s*\(/);
+            if (match) {
+                gpu = match[1].trim();
+                console.log('Extracted from pattern:', gpu);
+                return gpu;
+            }
+            
+            // Fallback: Remove DirectX version and everything after
+            if (gpu.includes('Direct3D')) {
+                gpu = gpu.split(/Direct3D|direct3d/i)[0].trim();
+            }
+            
+            // Remove vendor prefix
+            gpu = gpu.replace(/^(NVIDIA|Intel|AMD|Qualcomm)\s+,?\s*/i, '')
+                     .replace(/^(NVIDIA|Intel|AMD|Qualcomm)\s+,?\s*/i, ''); // twice to catch duplicates
+            
+            // Remove shader model info
+            gpu = gpu.replace(/\s*(vs_|ps_|gs_|hs_|ds_|cs_)\d+_\d+.*$/i, '')
+                     .replace(/\s*\(.*?\).*$/g, '')
+                     .trim();
+            
+            return gpu || 'Unknown';
+        }
+
+        function displaySystemSpecs() {
+            const specs = [];
+            if (systemSpecs.gpu) specs.push({ label: 'GPU', value: systemSpecs.gpu });
+            if (systemSpecs.cpu) specs.push({ label: 'CPU', value: systemSpecs.cpu });
+            if (systemSpecs.ram && systemSpecs.ram !== 'Unknown') specs.push({ label: 'System RAM', value: systemSpecs.ram });
+            if (systemSpecs.resolution) specs.push({ label: 'Display', value: systemSpecs.resolution });
+            if (systemSpecs.estimatedTier) {
+                const tierColor = { 'low': '#666', 'medium': '#1e5a96', 'high': '#2d7d3d', 'ultra': '#c99500' }[systemSpecs.estimatedTier];
+                specs.push({ label: 'Performance Tier', value: systemSpecs.estimatedTier.toUpperCase(), color: tierColor });
+            }
+
+            const container = document.getElementById('specsContainer');
+            if (specs.length === 0) {
+                container.innerHTML = '<div class="loading">Unable to detect. Click Edit to enter manually.</div>';
+            } else {
+                container.innerHTML = specs.map(s => {
+                    if (s.color) {
+                        return `<div class="spec-card" style="background: ${s.color}; color: ${s.color === '#c99500' ? '#000' : '#fff'};"><div class="spec-label" style="color: inherit; opacity: 0.8;">${s.label}</div><div class="spec-value" style="color: inherit;">${s.value}</div></div>`;
+                    }
+                    return `<div class="spec-card"><div class="spec-label">${s.label}</div><div class="spec-value">${s.value}</div></div>`;
+                }).join('');
+            }
+        }
+
+        function toggleSpecsEdit() {
+            const form = document.getElementById('specsFormContainer');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            if (systemSpecs && form.style.display === 'block') {
+                document.getElementById('gpuInput').value = systemSpecs.gpu;
+                document.getElementById('cpuModelInput').value = systemSpecs.cpuModel || '';
+                document.getElementById('ramInput').value = systemSpecs.ram.replace(' GB', '').replace('Unknown', '');
+                document.getElementById('cpuInput').value = systemSpecs.cpuCores === 'Unknown' ? '' : systemSpecs.cpuCores;
+                const resMatch = systemSpecs.resolution.match(/(\d+x\d+)/);
+                if (resMatch) document.getElementById('resolutionInput').value = resMatch[1];
+                document.getElementById('tierInput').value = systemSpecs.estimatedTier || '';
+            }
+        }
+
+        function saveSpecs() {
+            const gpu = document.getElementById('gpuInput').value.trim() || 'Unknown';
+            const cpuModel = document.getElementById('cpuModelInput').value.trim() || 'Unknown';
+            const cpuCores = parseInt(document.getElementById('cpuInput').value) || 0;
+            const ram = parseInt(document.getElementById('ramInput').value) || 0;
+            const resolution = document.getElementById('resolutionInput').value.trim() || '';
+            const manualTier = document.getElementById('tierInput').value;
+
+            let cpuDisplay = cpuModel;
+            if (cpuCores > 0) {
+                cpuDisplay = cpuModel === 'Unknown' ? `${cpuCores}-core processor` : `${cpuModel} (${cpuCores}-core)`;
+            }
+
+            systemSpecs.gpu = gpu;
+            systemSpecs.cpuModel = cpuModel;
+            systemSpecs.cpu = cpuDisplay;
+            systemSpecs.cpuCores = cpuCores > 0 ? cpuCores : 'Unknown';
+            systemSpecs.ram = ram > 0 ? `${ram} GB` : 'Unknown';
+            if (resolution) systemSpecs.resolution = resolution;
+            
+            // If manual tier selected, override the estimated tier
+            if (manualTier) {
+                systemSpecs.estimatedTier = manualTier;
+            }
+
+            localStorage.setItem('gamingOptimizerSpecs', JSON.stringify(systemSpecs));
+            displaySystemSpecs();
+            toggleSpecsEdit();
+            showNotification('Specifications saved');
+        }
+
+        function loadSavedSpecs() {
+            const saved = localStorage.getItem('gamingOptimizerSpecs');
+            if (saved && systemSpecs) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Keep the newly detected tier (don't override with saved medium from old version)
+                    const detectedTier = systemSpecs.estimatedTier;
+                    Object.assign(systemSpecs, parsed);
+                    // Always use the freshly detected tier - it's more accurate
+                    // Only use saved tier if it's explicitly set to something other than medium
+                    if (parsed.estimatedTier && parsed.estimatedTier !== 'medium') {
+                        systemSpecs.estimatedTier = parsed.estimatedTier;
+                    } else {
+                        systemSpecs.estimatedTier = detectedTier;
+                    }
+                    displaySystemSpecs();
+                    console.log('Loaded saved specs, using tier:', systemSpecs.estimatedTier);
+                } catch (e) {
+                    console.log('Error loading saved specs:', e);
+                }
+            }
+        }
+
+        async function openFolderPicker() {
+            if (!supportsFileSystemAccess) {
+                showNotification('Not supported. Use Edge, Chrome, or Opera.');
+                return;
+            }
+            try {
+                selectedFolderHandle = await window.showDirectoryPicker({
+                    id: 'gamesFolder',
+                    mode: 'read'
+                });
+                selectedFolderName = selectedFolderHandle.name;
+                document.getElementById('gameDirectory').value = selectedFolderHandle.name;
+                showNotification(`Folder selected: ${selectedFolderHandle.name}`);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    showNotification('Error selecting folder');
+                }
+            }
+        }
+
+        async function scanGames() {
+            if (!selectedFolderHandle) {
+                showNotification('Please click Browse first');
+                return;
+            }
+
+            const btn = document.getElementById('scanBtn');
+            btn.disabled = true;
+            btn.textContent = 'Scanning...';
+
+            try {
+                // Load existing games first
+                const existingGames = loadGamesList();
+                const foundGames = new Map();
+                
+                let id = existingGames.length > 0 ? Math.max(...existingGames.map(g => g.id)) + 1 : 1;
+                
+                // Game detection patterns - exact folder name matching
+                // Each game should match its exact folder name as found on disk
+                const gamePatterns = [
+                    { exeNames: ['eldenring.exe'], name: 'Elden Ring', priority: 10 },
+                    { exeNames: ['starfield.exe'], name: 'Starfield', priority: 10 },
+                    { exeNames: ['fortnite.exe'], name: 'Fortnite', priority: 10 },
+                    { exeNames: ['valorant.exe'], name: 'VALORANT', priority: 10 },
+                    { exeNames: ['cs2.exe', 'csgo.exe'], name: 'Counter-Strike 2', priority: 10 },
+                    { exeNames: ['dota2.exe'], name: 'Dota 2', priority: 10 },
+                    { exeNames: ['leagueoflegends.exe', 'lol.exe'], name: 'League of Legends', priority: 10 },
+                    { exeNames: ['apexlegends.exe'], name: 'Apex Legends', priority: 10 },
+                    { exeNames: ['overwatch2.exe', 'overwatch.exe'], name: 'Overwatch 2', priority: 10 },
+                    { exeNames: ['destiny2.exe'], name: 'Destiny 2', priority: 10 },
+                    { exeNames: ['wow.exe', 'worldofwarcraft.exe'], name: 'World of Warcraft', priority: 10 },
+                    { exeNames: ['ffxiv.exe', 'ffxivgame.exe'], name: 'Final Fantasy XIV', priority: 10 },
+                    { exeNames: ['rainbowsixsiege.exe', 'r6siege.exe'], name: 'Rainbow Six Siege', priority: 10 },
+                    { exeNames: ['escapefromtarkov.exe', 'eft.exe'], name: 'Escape from Tarkov', priority: 10 },
+                    { exeNames: ['javaw.exe', 'minecraft.exe'], name: 'Minecraft', priority: 10 },
+                    { exeNames: ['rust.exe', 'rustclient.exe'], name: 'Rust', priority: 10 },
+                    { exeNames: ['gtav.exe', 'gta5.exe'], name: 'Grand Theft Auto V', priority: 10 },
+                    { exeNames: ['gtavi.exe', 'gta6.exe'], name: 'Grand Theft Auto VI', priority: 10 },
+                    { exeNames: ['rdr2.exe', 'reddeadredemption2.exe'], name: 'Red Dead Redemption 2', priority: 10 },
+                    { exeNames: ['godofwar.exe'], name: 'God of War', priority: 10 },
+                    { exeNames: ['ghostoftsushima.exe'], name: 'Ghost of Tsushima', priority: 10 },
+                    { exeNames: ['spiderman.exe'], name: 'Spider-Man', priority: 10 },
+                    { exeNames: ['witcher3.exe'], name: 'The Witcher 3', priority: 10 },
+                    { exeNames: ['skyrimse.exe', 'skyrim.exe'], name: 'Skyrim', priority: 10 },
+                    { exeNames: ['fallout4.exe'], name: 'Fallout 4', priority: 9 },
+                    { exeNames: ['fallout76.exe'], name: 'Fallout 76', priority: 9 },
+                    { exeNames: ['d4.exe', 'diablo4.exe'], name: 'Diablo IV', priority: 10 },
+                    { exeNames: ['darksouls3.exe', 'ds3.exe'], name: 'Dark Souls III', priority: 10 },
+                    { exeNames: ['bloodborne.exe'], name: 'Bloodborne', priority: 10 },
+                    { exeNames: ['sekiro.exe', 'sekiroshadowsdietwice.exe'], name: 'Sekiro', priority: 10 },
+                    { exeNames: ['mhw.exe'], name: 'Monster Hunter World', priority: 10 },
+                    { exeNames: ['mhr.exe'], name: 'Monster Hunter Rise', priority: 9 },
+                    { exeNames: ['stardewvalley.exe'], name: 'Stardew Valley', priority: 9 },
+                    { exeNames: ['hollowknight.exe'], name: 'Hollow Knight', priority: 9 },
+                    { exeNames: ['celeste.exe'], name: 'Celeste', priority: 8 },
+                    { exeNames: ['terraria.exe'], name: 'Terraria', priority: 9 },
+                    { exeNames: ['factorio.exe'], name: 'Factorio', priority: 9 },
+                    { exeNames: ['rimworld.exe'], name: 'RimWorld', priority: 9 },
+                    { exeNames: ['kerbalspaceprogram.exe'], name: 'Kerbal Space Program', priority: 9 },
+                    { exeNames: ['thesims4.exe'], name: 'The Sims 4', priority: 9 },
+                    { exeNames: ['citiesskylines.exe'], name: 'Cities: Skylines', priority: 9 },
+                    { exeNames: ['undertale.exe'], name: 'Undertale', priority: 9 },
+                    { exeNames: ['cuphead.exe'], name: 'Cuphead', priority: 9 },
+                    { exeNames: ['subnautica.exe'], name: 'Subnautica', priority: 8 },
+                    { exeNames: ['valheim.exe'], name: 'Valheim', priority: 9 },
+                    { exeNames: ['grounded.exe'], name: 'Grounded', priority: 8 },
+                    { exeNames: ['riskofrain2.exe'], name: 'Risk of Rain 2', priority: 9 },
+                    { exeNames: ['enterthegungeon.exe'], name: 'Enter the Gungeon', priority: 9 },
+                    { exeNames: ['vampiresurvivors.exe'], name: 'Vampire Survivors', priority: 8 },
+                    { exeNames: ['slaythe spire.exe'], name: 'Slay the Spire', priority: 9 },
+                    { exeNames: ['inside.exe'], name: 'INSIDE', priority: 9 },
+                    { exeNames: ['journey.exe'], name: 'Journey', priority: 8 },
+                    { exeNames: ['hotlinemiami.exe'], name: 'Hotline Miami', priority: 9 },
+                    { exeNames: ['discoelysium.exe'], name: 'Disco Elysium', priority: 9 },
+                    { exeNames: ['outerwilds.exe'], name: 'Outer Wilds', priority: 9 },
+                    { exeNames: ['haloinfinite.exe', 'halo.exe'], name: 'Halo Infinite', priority: 10 },
+                    { exeNames: ['forzahorizon5.exe'], name: 'Forza Horizon 5', priority: 10 },
+                    { exeNames: ['forzamotorsport.exe'], name: 'Forza Motorsport', priority: 10 },
+                    { exeNames: ['cyberpunk2077.exe'], name: 'Cyberpunk 2077', priority: 10 },
+                    { exeNames: ['blackmythwukong.exe', 'wukong.exe'], name: 'Black Myth: Wukong', priority: 10 },
+                    { exeNames: ['dragonageveilguard.exe'], name: 'Dragon Age: The Veilguard', priority: 10 },
+                    { exeNames: ['dragondogma2.exe', 'ddogma2.exe'], name: "Dragon's Dogma 2", priority: 10 },
+                    { exeNames: ['ffxvi.exe', 'finalfantasyxvi.exe'], name: 'Final Fantasy XVI', priority: 10 },
+                    { exeNames: ['alanwake2.exe'], name: 'Alan Wake 2', priority: 10 },
+                    { exeNames: ['hellblade2.exe'], name: "Senua's Saga: Hellblade II", priority: 10 },
+                    { exeNames: ['indy_game.exe'], name: 'Indiana Jones and the Great Circle', priority: 10 },
+                    { exeNames: ['metaphor.exe'], name: 'Metaphor: ReFantazio', priority: 10 },
+                    { exeNames: ['stalker2.exe'], name: 'S.T.A.L.K.E.R. 2', priority: 10 },
+                    { exeNames: ['spacemarine2.exe'], name: 'Warhammer 40K: Space Marine 2', priority: 10 },
+                    { exeNames: ['palworld.exe'], name: 'Palworld', priority: 10 },
+                    { exeNames: ['helldivers2.exe'], name: 'HELLDIVERS 2', priority: 10 },
+                    { exeNames: ['tekken8.exe'], name: 'Tekken 8', priority: 10 },
+                    { exeNames: ['streetfighter6.exe', 'sf6.exe'], name: 'Street Fighter 6', priority: 10 },
+                    { exeNames: ['mw3.exe'], name: 'Call of Duty: Modern Warfare III', priority: 9 },
+                    { exeNames: ['bf2042.exe'], name: 'Battlefield 2042', priority: 9 },
+                    { exeNames: ['ffviir.exe', 'ff7remake.exe'], name: 'Final Fantasy VII Remake', priority: 10 },
+                    { exeNames: ['ffxv.exe'], name: 'Final Fantasy XV', priority: 9 },
+                    { exeNames: ['horizonzerodawn.exe'], name: 'Horizon Zero Dawn', priority: 10 },
+                    { exeNames: ['horizonforbiddenwest.exe'], name: 'Horizon Forbidden West', priority: 10 },
+                    { exeNames: ['jfo.exe'], name: 'Star Wars Jedi: Fallen Order', priority: 9 },
+                    { exeNames: ['jedi_survivor.exe'], name: 'Star Wars Jedi: Survivor', priority: 10 },
+                    { exeNames: ['kcd.exe', 'kingdomcome.exe'], name: 'Kingdom Come: Deliverance', priority: 9 },
+                    { exeNames: ['uncharted.exe'], name: 'Uncharted: Legacy of Thieves', priority: 10 },
+                    { exeNames: ['ghostwire.exe'], name: 'Ghostwire: Tokyo', priority: 8 },
+                    { exeNames: ['avatar.exe'], name: 'Avatar: Frontiers of Pandora', priority: 9 },
+                    { exeNames: ['kena.exe'], name: 'Kena: Bridge of Spirits', priority: 8 },
+                    { exeNames: ['nms.exe', 'nomanssky.exe'], name: "No Man's Sky", priority: 9 },
+                    { exeNames: ['theforest.exe'], name: 'The Forest', priority: 8 },
+                    { exeNames: ['sonsoftheforest.exe'], name: 'Sons of the Forest', priority: 9 },
+                    { exeNames: ['dayz.exe'], name: 'DayZ', priority: 8 },
+                    { exeNames: ['conanexiles.exe'], name: 'Conan Exiles', priority: 8 },
+                    { exeNames: ['7daystodie.exe'], name: '7 Days to Die', priority: 8 },
+                    { exeNames: ['projectzomboid.exe'], name: 'Project Zomboid', priority: 8 },
+                    { exeNames: ['dontstarve_together.exe'], name: "Don't Starve Together", priority: 8 },
+                    { exeNames: ['raft.exe'], name: 'Raft', priority: 8 },
+                    { exeNames: ['assassinscreedvalhalla.exe'], name: "Assassin's Creed Valhalla", priority: 9 },
+                    { exeNames: ['farcry6.exe'], name: 'Far Cry 6', priority: 9 },
+                    { exeNames: ['justcause4.exe'], name: 'Just Cause 4', priority: 8 },
+                    { exeNames: ['theouterworlds.exe'], name: 'The Outer Worlds', priority: 9 },
+                    { exeNames: ['bioshock.exe'], name: 'BioShock Infinite', priority: 9 },
+                    { exeNames: ['dishonored2.exe'], name: 'Dishonored 2', priority: 9 },
+                    { exeNames: ['hitman3.exe'], name: 'HITMAN 3', priority: 9 },
+                    { exeNames: ['deusex.exe'], name: 'Deus Ex: Mankind Divided', priority: 8 },
+                    { exeNames: ['torchlight3.exe'], name: 'Torchlight III', priority: 8 },
+                    { exeNames: ['pathofexile2.exe'], name: 'Path of Exile 2', priority: 9 },
+                    { exeNames: ['xenoblade3.exe'], name: 'Xenoblade Chronicles 3', priority: 9 },
+                    { exeNames: ['xenoblade2.exe'], name: 'Xenoblade Chronicles 2', priority: 9 },
+                    { exeNames: ['fireemblem.exe'], name: 'Fire Emblem: Three Houses', priority: 9 },
+                    { exeNames: ['pokemonscarlet.exe'], name: 'Pokémon Scarlet', priority: 9 },
+                    { exeNames: ['pokemonviolet.exe'], name: 'Pokémon Violet', priority: 9 },
+                    { exeNames: ['deltarune.exe'], name: 'Deltarune', priority: 8 },
+                    { exeNames: ['hyperlightdrifter.exe'], name: 'Hyper Light Drifter', priority: 8 },
+                    { exeNames: ['limbo.exe'], name: 'Limbo', priority: 8 },
+                    { exeNames: ['hotlinemiami2.exe'], name: 'Hotline Miami 2: Wrong Number', priority: 9 },
+                    { exeNames: ['thebi ndingofisaac.exe'], name: 'The Binding of Isaac', priority: 8 },
+                    { exeNames: ['peglin.exe'], name: 'Peglin', priority: 8 },
+                    { exeNames: ['balatro.exe'], name: 'Balatro', priority: 9 },
+                    { exeNames: ['firewatch.exe'], name: 'Firewatch', priority: 8 },
+                    { exeNames: ['thestanleyparable.exe'], name: 'The Stanley Parable', priority: 8 }
+                ];
+
+                // Recursive function to scan folders deeply
+                async function scanFolder(handle, depth = 0, folderPath = '') {
+                    // Only scan top-level folders (depth 0 only)
+                    if (depth > 0) return;
+
+                    try {
+                        for await (const [name, entry] of handle.entries()) {
+                            // Only check directories, not files
+                            if (entry.kind !== 'directory') continue;
+                            
+                            const fullPath = folderPath ? `${folderPath}/${name}` : name;
+
+                            console.log(`Scanning folder: "${name}"`);
+
+                            // Look for .exe files in this folder
+                            try {
+                                for await (const [exeName, exeEntry] of entry.entries()) {
+                                    const exeLower = exeName.toLowerCase();
+                                    
+                                    // Only check .exe files
+                                    if (exeEntry.kind === 'file' && exeLower.endsWith('.exe')) {
+                                        console.log(`  Found .exe: "${exeName}"`);
+                                        
+                                        // Check if this .exe matches any game pattern
+                                        for (const pattern of gamePatterns) {
+                                            const matches = pattern.exeNames.some(exe => exeLower === exe.toLowerCase());
+                                            
+                                            if (matches) {
+                                                console.log(`  ✓ MATCHED: "${exeName}" -> ${pattern.name}`);
+                                                if (!foundGames.has(pattern.name) || foundGames.get(pattern.name).priority < pattern.priority) {
+                                                    foundGames.set(pattern.name, { priority: pattern.priority, path: fullPath });
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                // Can't read inside this folder, skip it
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Scan error:', err);
+                    }
+                }
+
+                await scanFolder(selectedFolderHandle, 0, selectedFolderName);
+
+                // Add newly found games to existing list
+                let newCount = 0;
+                foundGames.forEach((data, gameName) => {
+                    if (!existingGames.some(g => g.name === gameName)) {
+                        existingGames.push({
+                            id: id++,
+                            name: gameName,
+                            path: data.path
+                        });
+                        newCount++;
+                    }
+                });
+
+                gamesList = existingGames;
+                saveGamesList();
+                displayGamesList();
+                
+                console.log('=== SCAN COMPLETE ===');
+                console.log('Matched games:', Array.from(foundGames.keys()));
+                
+                if (newCount === 0) {
+                    showNotification('No new games found in this folder');
+                } else {
+                    showNotification(`Found ${newCount} new game(s) - Total: ${gamesList.length}`);
+                }
+            } catch (err) {
+                console.error('Scan error:', err);
+                showNotification('Error scanning folder');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Scan';
+            }
+        }
+
+        function saveGamesList() {
+            localStorage.setItem('discoveredGames', JSON.stringify(gamesList));
+        }
+
+        function loadGamesList() {
+            const saved = localStorage.getItem('discoveredGames');
+            if (saved) {
+                try {
+                    gamesList = JSON.parse(saved);
+                    return gamesList;
+                } catch (e) {
+                    console.log('Could not load saved games');
+                    return [];
+                }
+            }
+            return [];
+        }
+
+        // Load games on startup
+        window.addEventListener('DOMContentLoaded', () => {
+            gamesList = loadGamesList();
+        }, { once: true });
+
+        function displayGamesList() {
+            const container = document.getElementById('gamesTableContainer');
+            if (gamesList.length === 0) {
+                container.innerHTML = '<div class="empty-state">No games discovered yet. Click Scan to find installed games.</div>';
+                return;
+            }
+
+            let html = '<div class="table-wrapper"><table><thead><tr><th>Game</th><th>Install Directory</th><th>Action</th></tr></thead><tbody>';
+            gamesList.forEach(game => {
+                const selected = selectedGame?.id === game.id;
+                // Show just the relative path with Windows-style backslashes
+                const displayPath = game.path.replace(/\//g, '\\');
+                html += `<tr><td class="game-name">${game.name}</td><td class="game-size" style="font-size: 12px; color: #999; word-break: break-word;">${displayPath}</td>
+                    <td><button class="select-btn ${selected ? 'selected' : ''}" onclick="selectGame(${game.id})">${selected ? '✓ Selected' : 'View settings'}</button></td></tr>`;
+            });
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function selectGame(id) {
+            // If clicking the same game, deselect it
+            if (selectedGame?.id === id) {
+                selectedGame = null;
+                document.getElementById('settingsPanel').style.display = 'none';
+            } else {
+                selectedGame = gamesList.find(g => g.id === id);
+                displayRecommendedSettings();
+            }
+            displayGamesList();
+        }
+
+        function displayRecommendedSettings() {
+            if (!selectedGame || !systemSpecs) return;
+
+            const gameKey = selectedGame.name.toLowerCase();
+            let gameData = null;
+            for (const [key, data] of Object.entries(gameDatabase)) {
+                if (gameKey.includes(key.replace(/'/g, ''))) {
+                    gameData = data;
+                    break;
+                }
+            }
+
+            const panelContainer = document.getElementById('settingsPanel');
+            
+            if (!gameData) {
+                // Show message that game settings are not available
+                document.getElementById('gameTitle').textContent = selectedGame.name;
+                const grid = document.getElementById('settingsGrid');
+                grid.innerHTML = '<div style="grid-column: 1/-1; padding: 1rem; text-align: center; color: #999;">Settings recommendations coming soon for this game. Check back later!</div>';
+                panelContainer.style.display = 'block';
+                panelContainer.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            const tierMap = { 'low': 'low', 'medium': 'medium', 'high': 'high', 'ultra': 'ultra' };
+            const tier = tierMap[systemSpecs.estimatedTier] || 'high';
+            const settings = gameData.settings[tier];
+
+            document.getElementById('gameTitle').textContent = gameData.name;
+            const badge = document.getElementById('profileBadge');
+            badge.textContent = tier.toUpperCase();
+            const colors = { 'low': '#666', 'medium': '#1e5a96', 'high': '#2d7d3d', 'ultra': '#c99500' };
+            badge.style.background = colors[tier];
+            badge.style.color = tier === 'ultra' ? '#000' : '#fff';
+
+            const grid = document.getElementById('settingsGrid');
+            grid.innerHTML = Object.entries(settings).map(([key, val]) => 
+                `<div class="setting-item"><div class="setting-label">${key.replace(/([A-Z])/g, ' $1').trim()}</div><div class="setting-value">${val}</div></div>`
+            ).join('');
+
+            panelContainer.style.display = 'block';
+            panelContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showNotification(msg) {
+            const div = document.createElement('div');
+            div.className = 'notification';
+            div.textContent = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
