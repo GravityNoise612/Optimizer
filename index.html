@@ -92,8 +92,25 @@
             <h2>Scan for games</h2>
             <div style="margin-bottom: 1rem; padding: 1rem; background: #2a2a2a; border: 0.5px solid #444; border-radius: 8px;">
                 <p style="font-size: 13px; color: #ccc; margin: 0 0 8px 0;"><strong>ℹ️ How it works:</strong></p>
-                <p style="font-size: 12px; color: #999; margin: 0;">1. Click "Browse" and select your games folder<br>2. Click "Scan" to find installed games<br><br><strong>Result:</strong> Found games will display with their relative install paths within your selected folder.</p>
+                <p style="font-size: 12px; color: #999; margin: 0;" id="scanInstructions">
+                    <span id="localInstructions">
+                        <strong>Local HTML:</strong> Click "Browse" → Select games folder → Click "Scan"<br>
+                        Automatic detection finds installed games by folder name.<br><br>
+                    </span>
+                    <span id="githubInstructions" style="display: none;">
+                        <strong>GitHub Pages:</strong> Click "Browse" to manually add games<br>
+                        Type game names or select from popular games list.<br><br>
+                    </span>
+                    <strong>Result:</strong> Games display with settings recommendations based on your hardware.
+                </p>
             </div>
+            <script>
+                // Detect GitHub Pages and update instructions
+                if (window.location.hostname.includes('github.io')) {
+                    document.getElementById('localInstructions').style.display = 'none';
+                    document.getElementById('githubInstructions').style.display = 'inline';
+                }
+            </script>
             <div style="margin-bottom: 1rem;">
                 <label class="input-label">Game install location</label>
                 <div class="directory-input-group">
@@ -471,8 +488,16 @@
         }
 
         async function openFolderPicker() {
-            if (!supportsFileSystemAccess) {
-                showNotification('Not supported. Use Edge, Chrome, or Opera.');
+            // Check if we're on GitHub Pages
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            
+            if (!supportsFileSystemAccess || isGitHubPages) {
+                if (isGitHubPages) {
+                    showNotification('ℹ️ GitHub Pages: Folder scanning not available. Use manual entry instead.');
+                } else {
+                    showNotification('📁 Folder scanning requires Chrome, Edge, or Opera. Using manual entry instead.');
+                }
+                showAddGameForm();
                 return;
             }
             try {
@@ -482,7 +507,7 @@
                 });
                 selectedFolderName = selectedFolderHandle.name;
                 document.getElementById('gameDirectory').value = selectedFolderHandle.name;
-                showNotification(`Folder selected: ${selectedFolderHandle.name}`);
+                showNotification(`✅ Folder selected: ${selectedFolderHandle.name}`);
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     showNotification('Error selecting folder');
@@ -490,9 +515,157 @@
             }
         }
 
+        function showAddGameForm() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #2a2a2a; padding: 2rem; border-radius: 8px; max-width: 600px; width: 90%; border: 0.5px solid #444; color: #e0e0e0;">
+                    <h2 style="margin-bottom: 0.5rem;">Add Games</h2>
+                    <p style="color: #999; margin-bottom: 1rem; font-size: 13px;">
+                        Type to search or scroll through the list. 198 games available.
+                    </p>
+                    
+                    <input type="text" id="manualGameInput" placeholder="Search games..." style="
+                        width: 100%;
+                        padding: 10px 12px;
+                        border-radius: 8px;
+                        border: 0.5px solid #444;
+                        background: #1a1a1a;
+                        color: #e0e0e0;
+                        margin-bottom: 1rem;
+                        box-sizing: border-box;
+                        font-size: 14px;
+                    ">
+                    
+                    <div id="gamesList" style="max-height: 400px; overflow-y: auto; margin-bottom: 1rem; border: 0.5px solid #444; border-radius: 8px; background: #1a1a1a;">
+                        <div style="padding: 0.75rem; color: #999; font-size: 12px; border-bottom: 0.5px solid #333;">
+                            Click a game to add it
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 8px;">
+                        <button id="addCustomBtn" style="flex: 1; padding: 10px; border-radius: 8px; border: 0.5px solid #2a7ac2; background: #1e5a96; color: white; cursor: pointer; font-weight: 500;">Add Custom Game</button>
+                        <button id="cancelBtn" style="flex: 1; padding: 10px; border-radius: 8px; border: 0.5px solid #444; background: transparent; color: #e0e0e0; cursor: pointer;">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            const input = document.getElementById('manualGameInput');
+            const listDiv = document.getElementById('gamesList');
+            
+            // Get all unique game names from gamePatterns
+            const allGames = [
+                'Black Myth: Wukong', 'Baldur\'s Gate 3', 'S.T.A.L.K.E.R. 2', 'Dragon Age: The Veilguard',
+                'Indiana Jones and the Great Circle', 'Final Fantasy VII Rebirth', 'Metaphor: ReFantazio',
+                'Tekken 8', 'HELLDIVERS 2', 'Palworld', 'Space Marine 2', 'Balatro', 'Manor Lords',
+                'Enshrouded', 'Starfield', 'Alan Wake 2', 'Hogwarts Legacy', 'Diablo IV', 'Resident Evil 4 Remake',
+                'Street Fighter 6', 'Star Wars Jedi: Survivor', 'Elden Ring', 'Cyberpunk 2077', 'The Witcher 3',
+                'GTA V', 'Red Dead Redemption 2', 'Skyrim', 'Fallout 4', 'Fortnite', 'VALORANT', 'Counter-Strike 2',
+                'Apex Legends', 'Overwatch 2', 'Call of Duty: Warzone', 'Minecraft', 'Rust', 'Valheim', 'Terraria',
+                'Stardew Valley', 'Hades', 'Hollow Knight', 'Dead Cells', 'Celeste', 'Factorio', 'RimWorld',
+                'Forza Horizon 5', 'F1 24', 'Gran Turismo 7', 'Civilization VI', 'Total War: WARHAMMER III',
+                'Dark Souls III', 'Sekiro', 'Monster Hunter World', 'Dying Light 2', 'Resident Evil Village',
+                'God of War', 'Spider-Man Remastered', 'The Last of Us Part I', 'Ghost of Tsushima',
+                'Halo Infinite', 'Sea of Thieves', 'Destiny 2', 'Warframe', 'Dota 2', 'League of Legends',
+                'Rocket League', 'Rainbow Six Siege', 'Subnautica', 'No Man\'s Sky', 'ARK: Survival Evolved',
+                'The Forest', 'Sons of the Forest', '7 Days to Die', 'DayZ', 'Conan Exiles', 'V Rising',
+                'Project Zomboid', 'Deep Rock Galactic', 'Risk of Rain 2', 'Phasmophobia', 'Lethal Company',
+                'Cities: Skylines', 'Planet Zoo', 'Microsoft Flight Simulator', 'Age of Empires IV',
+                'Stellaris', 'Crusader Kings III', 'Hearts of Iron IV', 'XCOM 2', 'Dishonored 2',
+                'Cuphead', 'Undertale', 'Disco Elysium', 'Outer Wilds', 'It Takes Two', 'A Way Out',
+                'Atomic Heart', 'Hi-Fi Rush', 'Dead Island 2', 'Lies of P', 'Remnant 2', 'Mortal Kombat 1',
+                'Vampire Survivors', 'Dave the Diver', 'Sea of Stars', 'Pizza Tower', 'Control', 'Metro Exodus',
+                'Death Stranding', 'Days Gone', 'Horizon Forbidden West', 'Sifu', 'Ghostwire: Tokyo',
+                'Stray', 'The Callisto Protocol', 'A Plague Tale: Requiem', 'Gotham Knights',
+                'Assetto Forza', 'iRacing', 'Need for Speed Unbound', 'EA SPORTS FC 24', 'NBA 2K24',
+                'The Binding of Isaac', 'Slay the Spire', 'Don\'t Starve Together', 'Deltarune',
+                'Dead Space Remake', 'Armored Core VI', 'PAYDAY 3', 'RoboCop: Rogue City', 'Cities: Skylines II'
+            ].sort();
+            
+            function renderGames(filter = '') {
+                const filtered = filter ? 
+                    allGames.filter(game => game.toLowerCase().includes(filter.toLowerCase())) : 
+                    allGames;
+                
+                listDiv.innerHTML = '<div style="padding: 0.75rem; color: #999; font-size: 12px; border-bottom: 0.5px solid #333;">' +
+                    `${filtered.length} game${filtered.length !== 1 ? 's' : ''} ${filter ? 'found' : 'available'}` +
+                    '</div>' +
+                    filtered.map(game => `
+                        <div class="game-item" data-game="${game}" style="
+                            padding: 10px 12px;
+                            cursor: pointer;
+                            border-bottom: 0.5px solid #333;
+                            color: #ccc;
+                            font-size: 13px;
+                            transition: background 0.2s;
+                        " onmouseover="this.style.background='#333'" onmouseout="this.style.background=''">
+                            ${game}
+                        </div>
+                    `).join('');
+                
+                // Add click handlers
+                document.querySelectorAll('.game-item').forEach(item => {
+                    item.onclick = () => {
+                        addGameManually(item.dataset.game);
+                        modal.remove();
+                    };
+                });
+            }
+            
+            renderGames();
+            
+            input.oninput = (e) => renderGames(e.target.value);
+            
+            document.getElementById('addCustomBtn').onclick = () => {
+                const gameName = input.value.trim();
+                if (gameName) {
+                    addGameManually(gameName);
+                    modal.remove();
+                } else {
+                    showNotification('Please enter or select a game name');
+                }
+            };
+            
+            document.getElementById('cancelBtn').onclick = () => modal.remove();
+            input.focus();
+        }
+
+        function addGameManually(gameName) {
+            const existingGames = loadGamesList();
+            const normalizedName = gameName.trim();
+            
+            if (existingGames.some(g => g.name.toLowerCase() === normalizedName.toLowerCase())) {
+                showNotification('Game already in list');
+                return;
+            }
+            
+            const newId = existingGames.length > 0 ? Math.max(...existingGames.map(g => g.id)) + 1 : 1;
+            existingGames.push({
+                id: newId,
+                name: normalizedName,
+                path: 'Manual entry'
+            });
+            
+            gamesList = existingGames;
+            saveGamesList();
+            displayGamesList();
+            showNotification(`✅ Added: ${normalizedName}`);
+        }
+
         async function scanGames() {
             if (!selectedFolderHandle) {
-                showNotification('Please click Browse first');
+                showNotification('❌ Please click "Browse & Scan Games" first');
                 return;
             }
 
@@ -501,208 +674,280 @@
             btn.textContent = 'Scanning...';
 
             try {
-                // Load existing games first
-                const existingGames = loadGamesList();
                 const foundGames = new Map();
                 
-                let id = existingGames.length > 0 ? Math.max(...existingGames.map(g => g.id)) + 1 : 1;
-                
-                // Game detection patterns - exact folder name matching
-                // Each game should match its exact folder name as found on disk
+                // Game patterns - ONLY folder name matching (150+ games from 2022-2025)
                 const gamePatterns = [
-                    { exeNames: ['eldenring.exe'], name: 'Elden Ring', priority: 10 },
-                    { exeNames: ['starfield.exe'], name: 'Starfield', priority: 10 },
-                    { exeNames: ['fortnite.exe'], name: 'Fortnite', priority: 10 },
-                    { exeNames: ['valorant.exe'], name: 'VALORANT', priority: 10 },
-                    { exeNames: ['cs2.exe', 'csgo.exe'], name: 'Counter-Strike 2', priority: 10 },
-                    { exeNames: ['dota2.exe'], name: 'Dota 2', priority: 10 },
-                    { exeNames: ['leagueoflegends.exe', 'lol.exe'], name: 'League of Legends', priority: 10 },
-                    { exeNames: ['apexlegends.exe'], name: 'Apex Legends', priority: 10 },
-                    { exeNames: ['overwatch2.exe', 'overwatch.exe'], name: 'Overwatch 2', priority: 10 },
-                    { exeNames: ['destiny2.exe'], name: 'Destiny 2', priority: 10 },
-                    { exeNames: ['wow.exe', 'worldofwarcraft.exe'], name: 'World of Warcraft', priority: 10 },
-                    { exeNames: ['ffxiv.exe', 'ffxivgame.exe'], name: 'Final Fantasy XIV', priority: 10 },
-                    { exeNames: ['rainbowsixsiege.exe', 'r6siege.exe'], name: 'Rainbow Six Siege', priority: 10 },
-                    { exeNames: ['escapefromtarkov.exe', 'eft.exe'], name: 'Escape from Tarkov', priority: 10 },
-                    { exeNames: ['javaw.exe', 'minecraft.exe'], name: 'Minecraft', priority: 10 },
-                    { exeNames: ['rust.exe', 'rustclient.exe'], name: 'Rust', priority: 10 },
-                    { exeNames: ['gtav.exe', 'gta5.exe'], name: 'Grand Theft Auto V', priority: 10 },
-                    { exeNames: ['gtavi.exe', 'gta6.exe'], name: 'Grand Theft Auto VI', priority: 10 },
-                    { exeNames: ['rdr2.exe', 'reddeadredemption2.exe'], name: 'Red Dead Redemption 2', priority: 10 },
-                    { exeNames: ['godofwar.exe'], name: 'God of War', priority: 10 },
-                    { exeNames: ['ghostoftsushima.exe'], name: 'Ghost of Tsushima', priority: 10 },
-                    { exeNames: ['spiderman.exe'], name: 'Spider-Man', priority: 10 },
-                    { exeNames: ['witcher3.exe'], name: 'The Witcher 3', priority: 10 },
-                    { exeNames: ['skyrimse.exe', 'skyrim.exe'], name: 'Skyrim', priority: 10 },
-                    { exeNames: ['fallout4.exe'], name: 'Fallout 4', priority: 9 },
-                    { exeNames: ['fallout76.exe'], name: 'Fallout 76', priority: 9 },
-                    { exeNames: ['d4.exe', 'diablo4.exe'], name: 'Diablo IV', priority: 10 },
-                    { exeNames: ['darksouls3.exe', 'ds3.exe'], name: 'Dark Souls III', priority: 10 },
-                    { exeNames: ['bloodborne.exe'], name: 'Bloodborne', priority: 10 },
-                    { exeNames: ['sekiro.exe', 'sekiroshadowsdietwice.exe'], name: 'Sekiro', priority: 10 },
-                    { exeNames: ['mhw.exe'], name: 'Monster Hunter World', priority: 10 },
-                    { exeNames: ['mhr.exe'], name: 'Monster Hunter Rise', priority: 9 },
-                    { exeNames: ['stardewvalley.exe'], name: 'Stardew Valley', priority: 9 },
-                    { exeNames: ['hollowknight.exe'], name: 'Hollow Knight', priority: 9 },
-                    { exeNames: ['celeste.exe'], name: 'Celeste', priority: 8 },
-                    { exeNames: ['terraria.exe'], name: 'Terraria', priority: 9 },
-                    { exeNames: ['factorio.exe'], name: 'Factorio', priority: 9 },
-                    { exeNames: ['rimworld.exe'], name: 'RimWorld', priority: 9 },
-                    { exeNames: ['kerbalspaceprogram.exe'], name: 'Kerbal Space Program', priority: 9 },
-                    { exeNames: ['thesims4.exe'], name: 'The Sims 4', priority: 9 },
-                    { exeNames: ['citiesskylines.exe'], name: 'Cities: Skylines', priority: 9 },
-                    { exeNames: ['undertale.exe'], name: 'Undertale', priority: 9 },
-                    { exeNames: ['cuphead.exe'], name: 'Cuphead', priority: 9 },
-                    { exeNames: ['subnautica.exe'], name: 'Subnautica', priority: 8 },
-                    { exeNames: ['valheim.exe'], name: 'Valheim', priority: 9 },
-                    { exeNames: ['grounded.exe'], name: 'Grounded', priority: 8 },
-                    { exeNames: ['riskofrain2.exe'], name: 'Risk of Rain 2', priority: 9 },
-                    { exeNames: ['enterthegungeon.exe'], name: 'Enter the Gungeon', priority: 9 },
-                    { exeNames: ['vampiresurvivors.exe'], name: 'Vampire Survivors', priority: 8 },
-                    { exeNames: ['slaythe spire.exe'], name: 'Slay the Spire', priority: 9 },
-                    { exeNames: ['inside.exe'], name: 'INSIDE', priority: 9 },
-                    { exeNames: ['journey.exe'], name: 'Journey', priority: 8 },
-                    { exeNames: ['hotlinemiami.exe'], name: 'Hotline Miami', priority: 9 },
-                    { exeNames: ['discoelysium.exe'], name: 'Disco Elysium', priority: 9 },
-                    { exeNames: ['outerwilds.exe'], name: 'Outer Wilds', priority: 9 },
-                    { exeNames: ['haloinfinite.exe', 'halo.exe'], name: 'Halo Infinite', priority: 10 },
-                    { exeNames: ['forzahorizon5.exe'], name: 'Forza Horizon 5', priority: 10 },
-                    { exeNames: ['forzamotorsport.exe'], name: 'Forza Motorsport', priority: 10 },
-                    { exeNames: ['cyberpunk2077.exe'], name: 'Cyberpunk 2077', priority: 10 },
-                    { exeNames: ['blackmythwukong.exe', 'wukong.exe'], name: 'Black Myth: Wukong', priority: 10 },
-                    { exeNames: ['dragonageveilguard.exe'], name: 'Dragon Age: The Veilguard', priority: 10 },
-                    { exeNames: ['dragondogma2.exe', 'ddogma2.exe'], name: "Dragon's Dogma 2", priority: 10 },
-                    { exeNames: ['ffxvi.exe', 'finalfantasyxvi.exe'], name: 'Final Fantasy XVI', priority: 10 },
-                    { exeNames: ['alanwake2.exe'], name: 'Alan Wake 2', priority: 10 },
-                    { exeNames: ['hellblade2.exe'], name: "Senua's Saga: Hellblade II", priority: 10 },
-                    { exeNames: ['indy_game.exe'], name: 'Indiana Jones and the Great Circle', priority: 10 },
-                    { exeNames: ['metaphor.exe'], name: 'Metaphor: ReFantazio', priority: 10 },
-                    { exeNames: ['stalker2.exe'], name: 'S.T.A.L.K.E.R. 2', priority: 10 },
-                    { exeNames: ['spacemarine2.exe'], name: 'Warhammer 40K: Space Marine 2', priority: 10 },
-                    { exeNames: ['palworld.exe'], name: 'Palworld', priority: 10 },
-                    { exeNames: ['helldivers2.exe'], name: 'HELLDIVERS 2', priority: 10 },
-                    { exeNames: ['tekken8.exe'], name: 'Tekken 8', priority: 10 },
-                    { exeNames: ['streetfighter6.exe', 'sf6.exe'], name: 'Street Fighter 6', priority: 10 },
-                    { exeNames: ['mw3.exe'], name: 'Call of Duty: Modern Warfare III', priority: 9 },
-                    { exeNames: ['bf2042.exe'], name: 'Battlefield 2042', priority: 9 },
-                    { exeNames: ['ffviir.exe', 'ff7remake.exe'], name: 'Final Fantasy VII Remake', priority: 10 },
-                    { exeNames: ['ffxv.exe'], name: 'Final Fantasy XV', priority: 9 },
-                    { exeNames: ['horizonzerodawn.exe'], name: 'Horizon Zero Dawn', priority: 10 },
-                    { exeNames: ['horizonforbiddenwest.exe'], name: 'Horizon Forbidden West', priority: 10 },
-                    { exeNames: ['jfo.exe'], name: 'Star Wars Jedi: Fallen Order', priority: 9 },
-                    { exeNames: ['jedi_survivor.exe'], name: 'Star Wars Jedi: Survivor', priority: 10 },
-                    { exeNames: ['kcd.exe', 'kingdomcome.exe'], name: 'Kingdom Come: Deliverance', priority: 9 },
-                    { exeNames: ['uncharted.exe'], name: 'Uncharted: Legacy of Thieves', priority: 10 },
-                    { exeNames: ['ghostwire.exe'], name: 'Ghostwire: Tokyo', priority: 8 },
-                    { exeNames: ['avatar.exe'], name: 'Avatar: Frontiers of Pandora', priority: 9 },
-                    { exeNames: ['kena.exe'], name: 'Kena: Bridge of Spirits', priority: 8 },
-                    { exeNames: ['nms.exe', 'nomanssky.exe'], name: "No Man's Sky", priority: 9 },
-                    { exeNames: ['theforest.exe'], name: 'The Forest', priority: 8 },
-                    { exeNames: ['sonsoftheforest.exe'], name: 'Sons of the Forest', priority: 9 },
-                    { exeNames: ['dayz.exe'], name: 'DayZ', priority: 8 },
-                    { exeNames: ['conanexiles.exe'], name: 'Conan Exiles', priority: 8 },
-                    { exeNames: ['7daystodie.exe'], name: '7 Days to Die', priority: 8 },
-                    { exeNames: ['projectzomboid.exe'], name: 'Project Zomboid', priority: 8 },
-                    { exeNames: ['dontstarve_together.exe'], name: "Don't Starve Together", priority: 8 },
-                    { exeNames: ['raft.exe'], name: 'Raft', priority: 8 },
-                    { exeNames: ['assassinscreedvalhalla.exe'], name: "Assassin's Creed Valhalla", priority: 9 },
-                    { exeNames: ['farcry6.exe'], name: 'Far Cry 6', priority: 9 },
-                    { exeNames: ['justcause4.exe'], name: 'Just Cause 4', priority: 8 },
-                    { exeNames: ['theouterworlds.exe'], name: 'The Outer Worlds', priority: 9 },
-                    { exeNames: ['bioshock.exe'], name: 'BioShock Infinite', priority: 9 },
-                    { exeNames: ['dishonored2.exe'], name: 'Dishonored 2', priority: 9 },
-                    { exeNames: ['hitman3.exe'], name: 'HITMAN 3', priority: 9 },
-                    { exeNames: ['deusex.exe'], name: 'Deus Ex: Mankind Divided', priority: 8 },
-                    { exeNames: ['torchlight3.exe'], name: 'Torchlight III', priority: 8 },
-                    { exeNames: ['pathofexile2.exe'], name: 'Path of Exile 2', priority: 9 },
-                    { exeNames: ['xenoblade3.exe'], name: 'Xenoblade Chronicles 3', priority: 9 },
-                    { exeNames: ['xenoblade2.exe'], name: 'Xenoblade Chronicles 2', priority: 9 },
-                    { exeNames: ['fireemblem.exe'], name: 'Fire Emblem: Three Houses', priority: 9 },
-                    { exeNames: ['pokemonscarlet.exe'], name: 'Pokémon Scarlet', priority: 9 },
-                    { exeNames: ['pokemonviolet.exe'], name: 'Pokémon Violet', priority: 9 },
-                    { exeNames: ['deltarune.exe'], name: 'Deltarune', priority: 8 },
-                    { exeNames: ['hyperlightdrifter.exe'], name: 'Hyper Light Drifter', priority: 8 },
-                    { exeNames: ['limbo.exe'], name: 'Limbo', priority: 8 },
-                    { exeNames: ['hotlinemiami2.exe'], name: 'Hotline Miami 2: Wrong Number', priority: 9 },
-                    { exeNames: ['thebi ndingofisaac.exe'], name: 'The Binding of Isaac', priority: 8 },
-                    { exeNames: ['peglin.exe'], name: 'Peglin', priority: 8 },
-                    { exeNames: ['balatro.exe'], name: 'Balatro', priority: 9 },
-                    { exeNames: ['firewatch.exe'], name: 'Firewatch', priority: 8 },
-                    { exeNames: ['thestanleyparable.exe'], name: 'The Stanley Parable', priority: 8 }
+                    // 2024-2025 Major Releases
+                    { folderNames: ['black myth wukong', 'black myth: wukong'], name: 'Black Myth: Wukong', priority: 10 },
+                    { folderNames: ['baldurs gate 3', 'baldur\'s gate 3', 'bg3'], name: 'Baldur\'s Gate 3', priority: 10 },
+                    { folderNames: ['stalker 2', 's.t.a.l.k.e.r. 2', 'stalker2'], name: 'S.T.A.L.K.E.R. 2', priority: 10 },
+                    { folderNames: ['dragon age the veilguard', 'dragon age veilguard'], name: 'Dragon Age: The Veilguard', priority: 10 },
+                    { folderNames: ['indiana jones and the great circle'], name: 'Indiana Jones and the Great Circle', priority: 10 },
+                    { folderNames: ['final fantasy vii rebirth'], name: 'Final Fantasy VII Rebirth', priority: 10 },
+                    { folderNames: ['metaphor refantazio'], name: 'Metaphor: ReFantazio', priority: 10 },
+                    { folderNames: ['tekken 8'], name: 'Tekken 8', priority: 10 },
+                    { folderNames: ['helldivers 2'], name: 'HELLDIVERS 2', priority: 10 },
+                    { folderNames: ['palworld'], name: 'Palworld', priority: 10 },
+                    { folderNames: ['like a dragon infinite wealth'], name: 'Like a Dragon: Infinite Wealth', priority: 10 },
+                    { folderNames: ['senuas saga hellblade 2', 'hellblade 2'], name: 'Senua\'s Saga: Hellblade II', priority: 10 },
+                    { folderNames: ['warhammer 40000 space marine 2', 'space marine 2'], name: 'Warhammer 40K: Space Marine 2', priority: 10 },
+                    { folderNames: ['balatro'], name: 'Balatro', priority: 10 },
+                    { folderNames: ['manor lords'], name: 'Manor Lords', priority: 10 },
+                    { folderNames: ['enshrouded'], name: 'Enshrouded', priority: 10 },
+                    { folderNames: ['the first descendant'], name: 'The First Descendant', priority: 10 },
+                    { folderNames: ['throne and liberty'], name: 'Throne and Liberty', priority: 10 },
+                    { folderNames: ['satisfactory'], name: 'Satisfactory', priority: 10 },
+                    
+                    // 2023 Major Releases
+                    { folderNames: ['starfield'], name: 'Starfield', priority: 10 },
+                    { folderNames: ['alan wake 2'], name: 'Alan Wake 2', priority: 10 },
+                    { folderNames: ['the legend of zelda tears of the kingdom', 'tears of the kingdom'], name: 'Zelda: Tears of the Kingdom', priority: 10 },
+                    { folderNames: ['resident evil 4', 're4'], name: 'Resident Evil 4 Remake', priority: 10 },
+                    { folderNames: ['street fighter 6', 'sf6'], name: 'Street Fighter 6', priority: 10 },
+                    { folderNames: ['diablo 4', 'diablo iv'], name: 'Diablo IV', priority: 10 },
+                    { folderNames: ['hogwarts legacy'], name: 'Hogwarts Legacy', priority: 10 },
+                    { folderNames: ['dead space'], name: 'Dead Space Remake', priority: 10 },
+                    { folderNames: ['star wars jedi survivor', 'jedi survivor'], name: 'Star Wars Jedi: Survivor', priority: 10 },
+                    { folderNames: ['armored core 6', 'armored core vi'], name: 'Armored Core VI', priority: 10 },
+                    { folderNames: ['mortal kombat 1', 'mk1'], name: 'Mortal Kombat 1', priority: 10 },
+                    { folderNames: ['remnant 2'], name: 'Remnant 2', priority: 10 },
+                    { folderNames: ['atomic heart'], name: 'Atomic Heart', priority: 10 },
+                    { folderNames: ['hi-fi rush'], name: 'Hi-Fi Rush', priority: 10 },
+                    { folderNames: ['dead island 2'], name: 'Dead Island 2', priority: 10 },
+                    { folderNames: ['lies of p'], name: 'Lies of P', priority: 10 },
+                    { folderNames: ['cities skylines 2', 'cities skylines ii'], name: 'Cities: Skylines II', priority: 10 },
+                    { folderNames: ['payday 3'], name: 'PAYDAY 3', priority: 10 },
+                    { folderNames: ['the outlast trials'], name: 'The Outlast Trials', priority: 10 },
+                    { folderNames: ['lords of the fallen'], name: 'Lords of the Fallen', priority: 10 },
+                    { folderNames: ['robocop rogue city'], name: 'RoboCop: Rogue City', priority: 10 },
+                    
+                    // 2022 Major Releases
+                    { folderNames: ['elden ring', 'eldenring'], name: 'Elden Ring', priority: 10 },
+                    { folderNames: ['god of war', 'god of war ragnarok'], name: 'God of War Ragnarök', priority: 10 },
+                    { folderNames: ['final fantasy xvi', 'ff16'], name: 'Final Fantasy XVI', priority: 10 },
+                    { folderNames: ['dying light 2'], name: 'Dying Light 2', priority: 10 },
+                    { folderNames: ['horizon forbidden west'], name: 'Horizon Forbidden West', priority: 10 },
+                    { folderNames: ['sifu'], name: 'Sifu', priority: 10 },
+                    { folderNames: ['ghostwire tokyo'], name: 'Ghostwire: Tokyo', priority: 10 },
+                    { folderNames: ['tiny tinas wonderlands'], name: 'Tiny Tina\'s Wonderlands', priority: 10 },
+                    { folderNames: ['lego star wars the skywalker saga'], name: 'LEGO Star Wars: The Skywalker Saga', priority: 10 },
+                    { folderNames: ['vampire survivors'], name: 'Vampire Survivors', priority: 10 },
+                    { folderNames: ['stray'], name: 'Stray', priority: 10 },
+                    { folderNames: ['the callisto protocol'], name: 'The Callisto Protocol', priority: 10 },
+                    { folderNames: ['a plague tale requiem'], name: 'A Plague Tale: Requiem', priority: 10 },
+                    { folderNames: ['the quarry'], name: 'The Quarry', priority: 10 },
+                    { folderNames: ['gotham knights'], name: 'Gotham Knights', priority: 10 },
+                    { folderNames: ['midnight suns', 'marvels midnight suns'], name: 'Marvel\'s Midnight Suns', priority: 10 },
+                    { folderNames: ['scorn'], name: 'Scorn', priority: 10 },
+                    
+                    // Evergreen AAA
+                    { folderNames: ['cyberpunk 2077', 'cyberpunk2077'], name: 'Cyberpunk 2077', priority: 10 },
+                    { folderNames: ['the witcher 3', 'witcher 3', 'witcher3'], name: 'The Witcher 3', priority: 10 },
+                    { folderNames: ['gta v', 'gta5', 'grand theft auto v', 'grand theft auto 5'], name: 'Grand Theft Auto V', priority: 10 },
+                    { folderNames: ['rdr2', 'red dead redemption 2'], name: 'Red Dead Redemption 2', priority: 10 },
+                    { folderNames: ['skyrim', 'the elder scrolls v skyrim'], name: 'Skyrim', priority: 10 },
+                    { folderNames: ['skyrimse', 'skyrim special edition'], name: 'Skyrim Special Edition', priority: 10 },
+                    { folderNames: ['fallout 4', 'fallout4'], name: 'Fallout 4', priority: 10 },
+                    { folderNames: ['fallout 76'], name: 'Fallout 76', priority: 10 },
+                    { folderNames: ['dark souls 3', 'darksouls3'], name: 'Dark Souls III', priority: 10 },
+                    { folderNames: ['sekiro'], name: 'Sekiro: Shadows Die Twice', priority: 10 },
+                    { folderNames: ['bloodborne'], name: 'Bloodborne', priority: 10 },
+                    { folderNames: ['monster hunter world', 'mhw'], name: 'Monster Hunter World', priority: 10 },
+                    { folderNames: ['monster hunter rise'], name: 'Monster Hunter Rise', priority: 10 },
+                    { folderNames: ['assassins creed valhalla', 'ac valhalla'], name: 'Assassin\'s Creed Valhalla', priority: 10 },
+                    { folderNames: ['assassins creed mirage', 'ac mirage'], name: 'Assassin\'s Creed Mirage', priority: 10 },
+                    { folderNames: ['far cry 6'], name: 'Far Cry 6', priority: 10 },
+                    { folderNames: ['resident evil village', 're8'], name: 'Resident Evil Village', priority: 10 },
+                    { folderNames: ['days gone'], name: 'Days Gone', priority: 10 },
+                    { folderNames: ['death stranding'], name: 'Death Stranding', priority: 10 },
+                    { folderNames: ['control'], name: 'Control', priority: 10 },
+                    { folderNames: ['metro exodus'], name: 'Metro Exodus', priority: 10 },
+                    
+                    // Competitive/Multiplayer
+                    { folderNames: ['fortnite'], name: 'Fortnite', priority: 10 },
+                    { folderNames: ['valorant'], name: 'VALORANT', priority: 10 },
+                    { folderNames: ['counter-strike 2', 'counter strike 2', 'cs2', 'csgo'], name: 'Counter-Strike 2', priority: 10 },
+                    { folderNames: ['apex legends'], name: 'Apex Legends', priority: 10 },
+                    { folderNames: ['overwatch 2'], name: 'Overwatch 2', priority: 10 },
+                    { folderNames: ['call of duty warzone', 'warzone'], name: 'Call of Duty: Warzone', priority: 10 },
+                    { folderNames: ['call of duty modern warfare 2', 'mw2'], name: 'Call of Duty: Modern Warfare II', priority: 10 },
+                    { folderNames: ['call of duty modern warfare 3', 'mw3'], name: 'Call of Duty: Modern Warfare III', priority: 10 },
+                    { folderNames: ['rainbow six siege', 'r6'], name: 'Rainbow Six Siege', priority: 10 },
+                    { folderNames: ['battlefield 2042'], name: 'Battlefield 2042', priority: 10 },
+                    { folderNames: ['dota 2', 'dota2'], name: 'Dota 2', priority: 10 },
+                    { folderNames: ['league of legends', 'lol'], name: 'League of Legends', priority: 10 },
+                    { folderNames: ['rocket league'], name: 'Rocket League', priority: 10 },
+                    { folderNames: ['destiny 2'], name: 'Destiny 2', priority: 10 },
+                    { folderNames: ['warframe'], name: 'Warframe', priority: 10 },
+                    { folderNames: ['escape from tarkov'], name: 'Escape From Tarkov', priority: 10 },
+                    { folderNames: ['hunt showdown'], name: 'Hunt: Showdown', priority: 10 },
+                    { folderNames: ['pubg', 'playerunknowns battlegrounds'], name: 'PUBG: Battlegrounds', priority: 10 },
+                    { folderNames: ['the finals'], name: 'THE FINALS', priority: 10 },
+                    
+                    // Survival/Sandbox
+                    { folderNames: ['minecraft', 'minecraft java edition'], name: 'Minecraft', priority: 10 },
+                    { folderNames: ['rust'], name: 'Rust', priority: 10 },
+                    { folderNames: ['valheim'], name: 'Valheim', priority: 10 },
+                    { folderNames: ['grounded'], name: 'Grounded', priority: 10 },
+                    { folderNames: ['subnautica'], name: 'Subnautica', priority: 10 },
+                    { folderNames: ['subnautica below zero'], name: 'Subnautica: Below Zero', priority: 10 },
+                    { folderNames: ['no mans sky'], name: 'No Man\'s Sky', priority: 10 },
+                    { folderNames: ['the forest'], name: 'The Forest', priority: 10 },
+                    { folderNames: ['sons of the forest'], name: 'Sons of the Forest', priority: 10 },
+                    { folderNames: ['7 days to die'], name: '7 Days to Die', priority: 10 },
+                    { folderNames: ['dayz'], name: 'DayZ', priority: 10 },
+                    { folderNames: ['ark survival evolved', 'ark'], name: 'ARK: Survival Evolved', priority: 10 },
+                    { folderNames: ['ark survival ascended'], name: 'ARK: Survival Ascended', priority: 10 },
+                    { folderNames: ['conan exiles', 'conanexiles'], name: 'Conan Exiles', priority: 10 },
+                    { folderNames: ['v rising'], name: 'V Rising', priority: 10 },
+                    { folderNames: ['project zomboid'], name: 'Project Zomboid', priority: 10 },
+                    { folderNames: ['the long dark'], name: 'The Long Dark', priority: 10 },
+                    { folderNames: ['green hell'], name: 'Green Hell', priority: 10 },
+                    { folderNames: ['raft'], name: 'Raft', priority: 10 },
+                    
+                    // Racing/Sports
+                    { folderNames: ['forza horizon 5', 'fh5'], name: 'Forza Horizon 5', priority: 10 },
+                    { folderNames: ['forza horizon 4', 'fh4'], name: 'Forza Horizon 4', priority: 10 },
+                    { folderNames: ['forza motorsport'], name: 'Forza Motorsport', priority: 10 },
+                    { folderNames: ['f1 24'], name: 'F1 24', priority: 10 },
+                    { folderNames: ['f1 23'], name: 'F1 23', priority: 10 },
+                    { folderNames: ['gran turismo 7', 'gt7'], name: 'Gran Turismo 7', priority: 10 },
+                    { folderNames: ['assetto corsa'], name: 'Assetto Corsa', priority: 10 },
+                    { folderNames: ['assetto corsa competizione'], name: 'Assetto Corsa Competizione', priority: 10 },
+                    { folderNames: ['iracing'], name: 'iRacing', priority: 10 },
+                    { folderNames: ['need for speed unbound'], name: 'Need for Speed Unbound', priority: 10 },
+                    { folderNames: ['ea sports fc 24', 'fc 24'], name: 'EA SPORTS FC 24', priority: 10 },
+                    { folderNames: ['nba 2k24'], name: 'NBA 2K24', priority: 10 },
+                    
+                    // Strategy/Simulation
+                    { folderNames: ['total war warhammer 3', 'warhammer 3'], name: 'Total War: WARHAMMER III', priority: 10 },
+                    { folderNames: ['civilization 6', 'civ 6'], name: 'Civilization VI', priority: 10 },
+                    { folderNames: ['stellaris'], name: 'Stellaris', priority: 10 },
+                    { folderNames: ['crusader kings 3', 'ck3'], name: 'Crusader Kings III', priority: 10 },
+                    { folderNames: ['hearts of iron 4', 'hoi4'], name: 'Hearts of Iron IV', priority: 10 },
+                    { folderNames: ['europa universalis 4', 'eu4'], name: 'Europa Universalis IV', priority: 10 },
+                    { folderNames: ['age of empires 4', 'aoe4'], name: 'Age of Empires IV', priority: 10 },
+                    { folderNames: ['age of empires 2', 'aoe2'], name: 'Age of Empires II', priority: 10 },
+                    { folderNames: ['company of heroes 3'], name: 'Company of Heroes 3', priority: 10 },
+                    { folderNames: ['xcom 2'], name: 'XCOM 2', priority: 10 },
+                    { folderNames: ['cities skylines'], name: 'Cities: Skylines', priority: 10 },
+                    { folderNames: ['planet zoo'], name: 'Planet Zoo', priority: 10 },
+                    { folderNames: ['jurassic world evolution 2'], name: 'Jurassic World Evolution 2', priority: 10 },
+                    { folderNames: ['farming simulator 22', 'fs22'], name: 'Farming Simulator 22', priority: 10 },
+                    { folderNames: ['microsoft flight simulator', 'msfs'], name: 'Microsoft Flight Simulator', priority: 10 },
+                    
+                    // Indie/Popular
+                    { folderNames: ['stardew valley', 'stardewvalley'], name: 'Stardew Valley', priority: 10 },
+                    { folderNames: ['terraria'], name: 'Terraria', priority: 10 },
+                    { folderNames: ['hollow knight', 'hollowknight'], name: 'Hollow Knight', priority: 10 },
+                    { folderNames: ['hades'], name: 'Hades', priority: 10 },
+                    { folderNames: ['hades 2', 'hades ii'], name: 'Hades II', priority: 10 },
+                    { folderNames: ['dead cells'], name: 'Dead Cells', priority: 10 },
+                    { folderNames: ['celeste'], name: 'Celeste', priority: 10 },
+                    { folderNames: ['cuphead'], name: 'Cuphead', priority: 10 },
+                    { folderNames: ['undertale'], name: 'Undertale', priority: 10 },
+                    { folderNames: ['deltarune'], name: 'Deltarune', priority: 10 },
+                    { folderNames: ['factorio'], name: 'Factorio', priority: 10 },
+                    { folderNames: ['rimworld'], name: 'RimWorld', priority: 10 },
+                    { folderNames: ['dont starve together', 'don\'t starve together'], name: 'Don\'t Starve Together', priority: 10 },
+                    { folderNames: ['binding of isaac'], name: 'The Binding of Isaac', priority: 10 },
+                    { folderNames: ['slay the spire'], name: 'Slay the Spire', priority: 10 },
+                    { folderNames: ['outer wilds'], name: 'Outer Wilds', priority: 10 },
+                    { folderNames: ['disco elysium'], name: 'Disco Elysium', priority: 10 },
+                    { folderNames: ['unpacking'], name: 'Unpacking', priority: 10 },
+                    { folderNames: ['spiritfarer'], name: 'Spiritfarer', priority: 10 },
+                    { folderNames: ['the witness'], name: 'The Witness', priority: 10 },
+                    { folderNames: ['braid'], name: 'Braid', priority: 10 },
+                    { folderNames: ['return of the obra dinn'], name: 'Return of the Obra Dinn', priority: 10 },
+                    
+                    // Horror
+                    { folderNames: ['resident evil 2', 're2'], name: 'Resident Evil 2 Remake', priority: 10 },
+                    { folderNames: ['resident evil 3', 're3'], name: 'Resident Evil 3 Remake', priority: 10 },
+                    { folderNames: ['resident evil 7', 're7'], name: 'Resident Evil 7', priority: 10 },
+                    { folderNames: ['phasmophobia'], name: 'Phasmophobia', priority: 10 },
+                    { folderNames: ['lethal company'], name: 'Lethal Company', priority: 10 },
+                    { folderNames: ['alan wake'], name: 'Alan Wake', priority: 10 },
+                    { folderNames: ['silent hill 2'], name: 'Silent Hill 2', priority: 10 },
+                    { folderNames: ['little nightmares'], name: 'Little Nightmares', priority: 10 },
+                    { folderNames: ['little nightmares 2', 'little nightmares ii'], name: 'Little Nightmares II', priority: 10 },
+                    { folderNames: ['amnesia the bunker'], name: 'Amnesia: The Bunker', priority: 10 },
+                    
+                    // Xbox/Microsoft Exclusives
+                    { folderNames: ['halo infinite'], name: 'Halo Infinite', priority: 10 },
+                    { folderNames: ['halo the master chief collection', 'halo mcc'], name: 'Halo: The Master Chief Collection', priority: 10 },
+                    { folderNames: ['gears 5'], name: 'Gears 5', priority: 10 },
+                    { folderNames: ['sea of thieves'], name: 'Sea of Thieves', priority: 10 },
+                    { folderNames: ['flight simulator'], name: 'Microsoft Flight Simulator', priority: 10 },
+                    
+                    // PlayStation Ports
+                    { folderNames: ['god of war'], name: 'God of War', priority: 10 },
+                    { folderNames: ['spider-man remastered', 'spiderman'], name: 'Marvel\'s Spider-Man Remastered', priority: 10 },
+                    { folderNames: ['spider-man miles morales', 'miles morales'], name: 'Spider-Man: Miles Morales', priority: 10 },
+                    { folderNames: ['ratchet and clank'], name: 'Ratchet & Clank: Rift Apart', priority: 10 },
+                    { folderNames: ['uncharted legacy of thieves'], name: 'Uncharted: Legacy of Thieves', priority: 10 },
+                    { folderNames: ['the last of us part 1', 'tlou'], name: 'The Last of Us Part I', priority: 10 },
+                    { folderNames: ['returnal'], name: 'Returnal', priority: 10 },
+                    { folderNames: ['ghost of tsushima'], name: 'Ghost of Tsushima', priority: 10 },
+                    
+                    // Other Notable
+                    { folderNames: ['minecraft dungeons'], name: 'Minecraft Dungeons', priority: 9 },
+                    { folderNames: ['sea of stars'], name: 'Sea of Stars', priority: 10 },
+                    { folderNames: ['dave the diver'], name: 'Dave the Diver', priority: 10 },
+                    { folderNames: ['pizza tower'], name: 'Pizza Tower', priority: 10 },
+                    { folderNames: ['blasphemous'], name: 'Blasphemous', priority: 10 },
+                    { folderNames: ['ori and the will of the wisps'], name: 'Ori and the Will of the Wisps', priority: 10 },
+                    { folderNames: ['deep rock galactic'], name: 'Deep Rock Galactic', priority: 10 },
+                    { folderNames: ['risk of rain 2'], name: 'Risk of Rain 2', priority: 10 },
+                    { folderNames: ['it takes two'], name: 'It Takes Two', priority: 10 },
+                    { folderNames: ['a way out'], name: 'A Way Out', priority: 10 },
                 ];
-
-                // Recursive function to scan folders deeply
                 async function scanFolder(handle, depth = 0, folderPath = '') {
-                    // Only scan top-level folders (depth 0 only)
                     if (depth > 0) return;
 
                     try {
                         for await (const [name, entry] of handle.entries()) {
-                            // Only check directories, not files
                             if (entry.kind !== 'directory') continue;
                             
-                            const fullPath = folderPath ? `${folderPath}/${name}` : name;
+                            const folderLower = name.toLowerCase();
+                            const fullPath = folderPath ? `${folderPath}\\${name}` : name;
 
-                            console.log(`Scanning folder: "${name}"`);
-
-                            // Look for .exe files in this folder
-                            try {
-                                for await (const [exeName, exeEntry] of entry.entries()) {
-                                    const exeLower = exeName.toLowerCase();
-                                    
-                                    // Only check .exe files
-                                    if (exeEntry.kind === 'file' && exeLower.endsWith('.exe')) {
-                                        console.log(`  Found .exe: "${exeName}"`);
-                                        
-                                        // Check if this .exe matches any game pattern
-                                        for (const pattern of gamePatterns) {
-                                            const matches = pattern.exeNames.some(exe => exeLower === exe.toLowerCase());
-                                            
-                                            if (matches) {
-                                                console.log(`  ✓ MATCHED: "${exeName}" -> ${pattern.name}`);
-                                                if (!foundGames.has(pattern.name) || foundGames.get(pattern.name).priority < pattern.priority) {
-                                                    foundGames.set(pattern.name, { priority: pattern.priority, path: fullPath });
-                                                }
-                                                break;
-                                            }
-                                        }
+                            // Only match if folder name matches a game pattern exactly
+                            for (const pattern of gamePatterns) {
+                                const matches = pattern.folderNames && pattern.folderNames.some(folderName => folderLower === folderName.toLowerCase());
+                                
+                                if (matches) {
+                                    console.log(`✓ MATCHED FOLDER: "${name}" -> ${pattern.name}`);
+                                    if (!foundGames.has(pattern.name) || foundGames.get(pattern.name).priority < pattern.priority) {
+                                        foundGames.set(pattern.name, { priority: pattern.priority, path: fullPath });
                                     }
+                                    break;
                                 }
-                            } catch (e) {
-                                // Can't read inside this folder, skip it
                             }
                         }
-                    } catch (err) {
-                        console.error('Scan error:', err);
-                    }
+                    } catch (err) {}
                 }
 
                 await scanFolder(selectedFolderHandle, 0, selectedFolderName);
 
-                // Add newly found games to existing list
-                let newCount = 0;
+                // REPLACE game list with ONLY scanned games (don't accumulate old ones)
+                gamesList = [];
+                let id = 1;
                 foundGames.forEach((data, gameName) => {
-                    if (!existingGames.some(g => g.name === gameName)) {
-                        existingGames.push({
-                            id: id++,
-                            name: gameName,
-                            path: data.path
-                        });
-                        newCount++;
-                    }
+                    gamesList.push({
+                        id: id++,
+                        name: gameName,
+                        path: data.path
+                    });
                 });
 
-                gamesList = existingGames;
                 saveGamesList();
                 displayGamesList();
                 
-                console.log('=== SCAN COMPLETE ===');
-                console.log('Matched games:', Array.from(foundGames.keys()));
-                
-                if (newCount === 0) {
-                    showNotification('No new games found in this folder');
+                if (gamesList.length === 0) {
+                    showNotification('No games found in this folder');
                 } else {
-                    showNotification(`Found ${newCount} new game(s) - Total: ${gamesList.length}`);
+                    showNotification(`✅ Found ${gamesList.length} game(s) in this folder`);
                 }
             } catch (err) {
                 console.error('Scan error:', err);
